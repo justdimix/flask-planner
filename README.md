@@ -48,7 +48,7 @@ Validation: Strict input validation (restricted words in usernames, character li
 
 1. Clone the repository
 
-git clone [https://github.com/YOUR_USERNAME/flask-planner.git](https://github.com/justdimix/flask-planner.git)
+git clone [https://github.com/justdimix/flask-planner.git](https://github.com/justdimix/flask-planner.git)
 cd flask-planner
 
 
@@ -84,7 +84,7 @@ Create an account at PythonAnywhere.
 
 Upload the code via Bash console:
 
-git clone [https://github.com/YOUR_USERNAME/flask-planner.git](https://github.com/justdimix/flask-planner.git) mysite
+git clone [https://github.com/justdimix/flask-planner.git](https://github.com/justdimix/flask-planner.git) mysite
 
 
 Configure the virtual environment:
