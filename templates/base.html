@@ -1,23 +1,192 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Календарь-Планировщик{% endblock %}</title>
+    <title>{% block title %}Calendar Planner{% endblock %}</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+        .container { max-width: 1200px; }
+    </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <a href="/">Главная</a>
-            </nav>
+    <header class="bg-white shadow-md relative z-40">
+        <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
+
+            <div class="flex items-center gap-[50px]">
+                <!-- Logo -->
+                <a href="{{ url_for('calendar_view') if current_user.is_authenticated else url_for('home') }}" class="text-2xl font-bold text-indigo-600 select-none no-underline hover:text-indigo-800 transition">
+                    Planner
+                </a>
+
+                <!-- NEW: News & Events Link -->
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('news') }}" class="text-base font-medium text-gray-600 hover:text-indigo-600 transition flex items-center gap-1">
+                    📰 News & Events
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="flex items-center space-x-5">
+                {% if current_user.is_authenticated %}
+
+                    <!-- USER PROFILE LINK -->
+                    <a href="{{ url_for('profile') }}" class="flex items-center gap-2 group no-underline">
+                        <!-- Avatar Logic -->
+                        {% if current_user.profile_pic and current_user.profile_pic != 'default.jpg' %}
+                            <!-- FIXED PATH: uploads/profile_pics/ -->
+                            <img src="{{ url_for('static', filename='uploads/profile_pics/' + current_user.profile_pic) }}"
+                                 alt="Avatar"
+                                 class="w-8 h-8 rounded-full object-cover border border-gray-200 group-hover:border-indigo-400 transition">
+                        {% else %}
+                             <div class="w-8 h-8 rounded-full bg-[#FFA07A] flex items-center justify-center text-white font-bold text-sm border border-gray-200 group-hover:border-indigo-400 transition">
+                                {{ current_user.username[0].upper() }}
+                             </div>
+                        {% endif %}
+                        <span class="text-gray-600 group-hover:text-indigo-600 transition text-sm font-medium">Hello, <b>{{ current_user.username }}</b></span>
+                    </a>
+
+                    <!-- NEW: Notifications Bell -->
+                    <a href="{{ url_for('notifications') }}" class="text-gray-500 hover:text-indigo-600 transition relative" title="Notifications">
+                        <span class="text-xl">🔔</span>
+                        <!-- Optional: Red dot if unread (static for now) -->
+                        <!-- <span class="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-red-400"></span> -->
+                    </a>
+
+                    <!-- GEAR MENU (Global) -->
+                    <div class="relative">
+                        <button id="globalGearBtn" onclick="toggleGlobalMenu(event)" class="text-gray-500 hover:text-gray-800 focus:outline-none transition transform hover:rotate-90 duration-300" title="User Settings">
+                            <span class="text-2xl pointer-events-none">⚙️</span>
+                        </button>
+
+                        <!-- Dropdown -->
+                        <div id="globalSettingsMenu" class="absolute right-0 mt-2 w-56 rounded-md shadow-xl bg-white ring-1 ring-black ring-opacity-5 border border-gray-100 hidden" style="display: none;">
+                            <div class="py-1" role="menu">
+                                <!-- Profile Link -->
+                                <a href="{{ url_for('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                                    👤 My Profile
+                                </a>
+
+                                <!-- Change Password -->
+                                <button onclick="openGlobalPasswordModal()" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                                    🔒 Change Password
+                                </button>
+
+                                <!-- Admin Link -->
+                                {% if current_user.is_admin %}
+                                    <a href="{{ url_for('admin_dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                                        {% if request.endpoint == 'calendar_view' and viewed_user and viewed_user.id != current_user.id %}
+                                            ← Back to Admin List
+                                        {% else %}
+                                            👾 Admin Panel
+                                        {% endif %}
+                                    </a>
+                                {% endif %}
+
+                                <div class="border-t border-gray-100 my-1"></div>
+
+                                <!-- Logout -->
+                                <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-800 transition font-medium">
+                                    🚪 Log Out
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="text-gray-600 hover:text-indigo-600 transition duration-150">Login</a>
+                    <a href="{{ url_for('register') }}" class="text-gray-600 hover:text-indigo-600 transition duration-150">Register</a>
+                {% endif %}
+            </div>
+        </nav>
     </header>
 
-    <main>
+    <main class="container mx-auto px-4 py-8">
+        <!-- Main content block -->
         {% block content %}{% endblock %}
     </main>
 
-    <footer>
-        <p>&copy; 2025 Проект PyCharm</p>
+    <footer class="text-center mt-12 py-4 text-sm text-gray-500">
+        <p>&copy; 2025 Calendar Planner Project</p>
     </footer>
+
+    <!-- GLOBAL MODAL: CHANGE PASSWORD -->
+    {% if current_user.is_authenticated %}
+    <div id="globalPasswordModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+        <div class="relative mx-auto p-6 border w-96 shadow-xl rounded-xl bg-white">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Change Your Password</h3>
+            <form action="{{ url_for('change_password') }}" method="POST">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">New Password</label>
+                    <!-- Added Validation attributes & logic -->
+                    <input type="password" name="new_password" id="newPassInput" required minlength="4" maxlength="20"
+                           class="mt-1 w-full border border-gray-300 rounded-md p-2 transition"
+                           placeholder="4-20 characters"
+                           oninput="validateGlobalPass()">
+                    <p id="globalPassError" class="text-xs text-red-500 mt-1 hidden font-bold">Length must be 4-20 chars.</p>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="document.getElementById('globalPasswordModal').style.display='none'" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Cancel</button>
+                    <button type="submit" id="globalPassBtn" disabled class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 opacity-50 cursor-not-allowed">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleGlobalMenu(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('globalSettingsMenu');
+            if (menu.style.display === 'none' || menu.style.display === '') {
+                menu.style.display = 'block';
+            } else {
+                menu.style.display = 'none';
+            }
+        }
+
+        // This function is called by profile.html to open the password modal
+        function openGlobalPasswordModal() {
+            const menu = document.getElementById('globalSettingsMenu');
+            if(menu) menu.style.display = 'none';
+            document.getElementById('globalPasswordModal').style.display = 'flex';
+        }
+
+        // VALIDATION FOR PASSWORD MODAL
+        function validateGlobalPass() {
+            const input = document.getElementById('newPassInput');
+            const btn = document.getElementById('globalPassBtn');
+            const err = document.getElementById('globalPassError');
+            const len = input.value.length;
+
+            if (len > 0 && (len < 4 || len > 20)) {
+                err.classList.remove('hidden');
+                input.classList.add('border-red-500');
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else if (len > 0) {
+                err.classList.add('hidden');
+                input.classList.remove('border-red-500');
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                 // Empty
+                 btn.disabled = true;
+                 btn.classList.add('opacity-50', 'cursor-not-allowed');
+                 err.classList.add('hidden');
+                 input.classList.remove('border-red-500');
+            }
+        }
+
+        // Close menu when clicking outside
+        window.addEventListener('click', function(event) {
+            const menu = document.getElementById('globalSettingsMenu');
+            if (menu && menu.style.display === 'block' && !event.target.closest('#globalGearBtn')) {
+                menu.style.display = 'none';
+            }
+        });
+    </script>
+    {% endif %}
 </body>
 </html>

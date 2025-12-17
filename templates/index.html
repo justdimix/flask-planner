@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    <div class="container mx-auto mt-10 text-center">
+        <h1 class="text-4xl font-extrabold text-gray-900">Welcome to Calendar Planner</h1>
+        <p class="mt-4 text-lg text-gray-600">
+            Please
+            <a href="{{ url_for('login') }}" class="text-indigo-600 hover:text-indigo-800 font-medium">login</a>
+            or
+            <a href="{{ url_for('register') }}" class="text-indigo-600 hover:text-indigo-800 font-medium">register</a>
+            to continue.
+        </p>
+    </div>
+{% endblock %}

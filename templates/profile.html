@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<!-- Include Cropper.js CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+
+<div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-100 relative">
+
+    <!-- HEADER WITH SETTINGS GEAR -->
+    <div class="relative mb-8 flex justify-center items-center">
+        <h1 class="text-3xl font-bold text-gray-900">
+            {% if user.id == current_user.id %}
+                My Profile
+            {% else %}
+                <span class="text-indigo-600">{{ user.username }}</span>
+            {% endif %}
+        </h1>
+
+        <!-- Local Profile Settings Gear (Visible only for self) -->
+        {% if user.id == current_user.id %}
+        <div class="absolute right-0 top-0">
+            <div class="relative">
+                <button onclick="toggleLocalProfileMenu()" class="text-gray-400 hover:text-gray-600 focus:outline-none transition transform hover:rotate-90 p-2" title="Profile Options">
+                    <span class="text-2xl">⚙️</span>
+                </button>
+
+                <div id="localProfileMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl ring-1 ring-black ring-opacity-5 z-20 border border-gray-100">
+                    <div class="py-1">
+                        <button onclick="openGlobalPasswordModal()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700">
+                            🔒 Change Password
+                        </button>
+
+                        <form action="{{ url_for('delete_task', task_id=0) }}" method="POST" onsubmit="return confirm('CRITICAL WARNING:\n\nAre you sure you want to DELETE your account?\n\nThis action cannot be undone. All your tasks will be lost.');">
+                            <input type="hidden" name="action" value="delete_self">
+                            <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-800">
+                                🗑️ Delete Account
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Main Form -->
+    <form method="POST" enctype="multipart/form-data" class="flex flex-col md:flex-row items-start gap-8" id="profileForm">
+
+        <!-- Left Column: Avatar & Status -->
+        <div class="flex flex-col items-center gap-4 w-full md:w-1/3">
+            <div class="relative w-40 h-40 group">
+                {% if user.profile_pic and user.profile_pic != 'default.jpg' %}
+                    <img id="avatarPreview" src="{{ url_for('static', filename='uploads/profile_pics/' + user.profile_pic) }}"
+                         alt="Profile Picture"
+                         class="w-40 h-40 rounded-full object-cover border-4 border-indigo-100 shadow-md">
+                {% else %}
+                    <div id="avatarPlaceholder" class="w-40 h-40 rounded-full bg-[#FFA07A] flex items-center justify-center text-white font-bold text-6xl border-4 border-indigo-100 shadow-md">
+                        {{ user.username[0].upper() }}
+                    </div>
+                    <img id="avatarPreview" src="" class="hidden w-40 h-40 rounded-full object-cover border-4 border-indigo-100 shadow-md">
+                {% endif %}
+
+                {% if can_edit %}
+                <label for="profile_pic_upload" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer z-10">
+                    <div class="bg-white text-indigo-600 rounded-full p-2 shadow-lg transform group-hover:scale-110 transition-transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </div>
+                </label>
+                <input type="file" id="profile_pic_upload" name="profile_pic" accept="image/*" class="hidden">
+                {% endif %}
+
+                <div class="absolute bottom-0 right-0 pointer-events-none z-20">
+                    {% if user.is_super_admin %}
+                        <span class="bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full shadow-sm border border-yellow-500">👑 Owner</span>
+                    {% elif user.is_admin %}
+                        <span class="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm border border-green-600">Admin</span>
+                    {% else %}
+                        <span class="bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm border border-gray-600">User</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="w-full text-center">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Status</label>
+                <select name="work_status" class="block w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 text-center"
+                        {% if not can_change_status %}disabled class="bg-gray-100 cursor-not-allowed w-full border border-gray-300 rounded-md p-2 text-center text-gray-500"{% endif %}>
+                    <option value="Office" {% if user.work_status == 'Office' %}selected{% endif %}>🏢 Working (Office)</option>
+                    <option value="Home" {% if user.work_status == 'Home' %}selected{% endif %}>🏠 Working (Home)</option>
+                    <option value="Sick" {% if user.work_status == 'Sick' %}selected{% endif %}>🤒 Sick Leave</option>
+                    <option value="Vacation" {% if user.work_status == 'Vacation' %}selected{% endif %}>🌴 Vacation</option>
+                    <option value="DayOff" {% if user.work_status == 'DayOff' %}selected{% endif %}>💤 Day Off</option>
+                </select>
+            </div>
+
+            {% if (user.id == current_user.id or current_user.is_super_admin) and user.profile_pic and user.profile_pic != 'default.jpg' %}
+                <button type="button"
+                        onclick="triggerReset()"
+                        class="text-xs text-red-500 hover:text-red-700 font-bold underline cursor-pointer bg-transparent border-0 p-0 mt-1">
+                    Reset Photo to Default
+                </button>
+            {% endif %}
+        </div>
+
+        <!-- Right Column: Personal Details -->
+        <div class="w-full md:w-2/3 space-y-5">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Username (5-15 chars, strict regex) -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Username</label>
+                    <input type="text" name="username" value="{{ user.username }}" required minlength="5" maxlength="15"
+                           class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           oninput="validateProfileInput(this, 'usernameCount', 'usernameError', 15, 5, true)"
+                           {% if not can_edit %}disabled{% endif %}>
+                    <div class="flex justify-between mt-1">
+                        <span id="usernameError" class="text-red-500 text-[10px] font-bold hidden">Invalid!</span>
+                        <span id="usernameCount" class="text-gray-400 text-[10px] ml-auto">0/15</span>
+                    </div>
+                </div>
+
+                <!-- Email (8-30 chars) -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Email</label>
+                    <input type="email" name="email" value="{{ user.email }}" required minlength="8" maxlength="30"
+                           class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           oninput="validateProfileInput(this, 'emailCount', 'emailError', 30, 8)"
+                           {% if not can_edit %}disabled{% endif %}>
+                    <div class="flex justify-between mt-1">
+                         <span id="emailError" class="text-red-500 text-[10px] font-bold hidden">Invalid length!</span>
+                        <span id="emailCount" class="text-gray-400 text-[10px] ml-auto">0/30</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full Name & Phone -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Full Name (Max 35) -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Full Name</label>
+                    <input type="text" name="full_name" value="{{ user.full_name or '' }}" placeholder="Ivanov Ivan Ivanovich" maxlength="35"
+                           class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           oninput="validateProfileInput(this, 'fullNameCount', null, 35)"
+                           {% if not can_edit %}disabled{% endif %}>
+                    <div class="flex justify-end mt-1">
+                        <span id="fullNameCount" class="text-gray-400 text-[10px]">0/35</span>
+                    </div>
+                </div>
+                <!-- Phone (Max 15) -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Phone Number</label>
+                    <input type="text" name="phone" value="{{ user.phone or '' }}" placeholder="+1 234 567 890" maxlength="15"
+                           class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           oninput="validateProfileInput(this, 'phoneCount', null, 15)"
+                           {% if not can_edit %}disabled{% endif %}>
+                    <div class="flex justify-end mt-1">
+                        <span id="phoneCount" class="text-gray-400 text-[10px]">0/15</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About Me (Max 250) -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">About Me</label>
+                <textarea name="about_me" rows="3" placeholder="Tell us about yourself..." maxlength="250"
+                          class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          oninput="validateProfileInput(this, 'aboutCount', null, 250)"
+                          {% if not can_edit %}disabled{% endif %}>{{ user.about_me or '' }}</textarea>
+                <div class="flex justify-end mt-1">
+                    <span id="aboutCount" class="text-gray-400 text-[10px]">0/250</span>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            {% if can_edit %}
+            <div class="pt-4 border-t border-gray-100 flex justify-end">
+                <button type="submit" id="saveProfileBtn" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 font-bold shadow-md transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Save Changes
+                </button>
+            </div>
+            {% else %}
+                <div class="pt-4 border-t border-gray-100">
+                    <p class="text-sm text-gray-500 italic text-center">You are viewing this profile in read-only mode.</p>
+                </div>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- HIDDEN FORMS/MODALS -->
+<form id="resetPhotoForm" action="{{ url_for('reset_profile_pic') }}" method="POST" style="display: none;">
+    <input type="hidden" name="user_id" value="{{ user.id }}">
+</form>
+
+<div id="cropperModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 50; align-items: center; justify-content: center;">
+    <div class="bg-white p-4 rounded-lg shadow-xl w-[90%] max-w-lg flex flex-col max-h-[90vh]">
+        <h3 class="text-lg font-bold text-gray-800 mb-2 text-center">Adjust Your Photo</h3>
+        <div class="relative w-full h-[400px] bg-gray-100 rounded overflow-hidden">
+            <img id="imageToCrop" src="" class="max-w-full" style="display: block; max-width: 100%;">
+        </div>
+        <div class="flex justify-end gap-3 mt-4 pt-2 border-t border-gray-100">
+            <button type="button" id="cancelCropBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 font-medium">Cancel</button>
+            <button type="button" id="cropImageBtn" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-bold">Crop & Save</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script>
+    // --- 1. STRICT VALIDATION LOGIC ---
+    const IS_SUPER_ADMIN = {{ 'true' if current_user.is_super_admin else 'false' }};
+
+    function validateProfileInput(input, countId, errorId, maxLength, minLength=0, isUsername=false) {
+        const value = input.value;
+        const countElem = document.getElementById(countId);
+        let errorElem = errorId ? document.getElementById(errorId) : null;
+
+        // Update Count
+        if (countElem) countElem.innerText = `${value.length}/${maxLength}`;
+
+        let isValid = true;
+        let errorMsg = "";
+
+        // Length Check
+        if (value.length > 0 && value.length < minLength) {
+             isValid = false;
+             errorMsg = `Min length is ${minLength}`;
+        }
+
+        // Username Specific Checks
+        if (isUsername && isValid) {
+            const regex = /^[a-zA-Zа-яА-ЯёЁ0-9]+$/; // Letters & Digits only
+            const lowerVal = value.toLowerCase();
+
+            if (!regex.test(value)) {
+                isValid = false;
+                errorMsg = "Only letters & numbers!";
+            } else if (!IS_SUPER_ADMIN && (lowerVal.includes("admin") || lowerVal.includes("super"))) {
+                isValid = false;
+                errorMsg = "Restricted word used!";
+            }
+        }
+
+        // UI Updates for this field
+        if (!isValid) {
+            input.classList.add('border-red-500', 'focus:ring-red-500');
+            // Mark as invalid
+            input.dataset.invalid = "true";
+            if(errorElem) {
+                errorElem.innerText = errorMsg;
+                errorElem.classList.remove('hidden');
+            }
+        } else {
+            input.classList.remove('border-red-500', 'focus:ring-red-500');
+            // Mark as valid
+            input.dataset.invalid = "false";
+            if(errorElem) errorElem.classList.add('hidden');
+        }
+
+        // Global Form Check (Check all fields)
+        checkFormValidity();
+    }
+
+    // Function to check ALL fields state
+    function checkFormValidity() {
+        const saveBtn = document.getElementById('saveProfileBtn');
+        if (!saveBtn) return;
+
+        // Find if ANY input has the error class
+        const invalidInputs = document.querySelectorAll('#profileForm .border-red-500');
+
+        if (invalidInputs.length > 0) {
+            saveBtn.disabled = true;
+            saveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            saveBtn.disabled = false;
+            saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
+
+    // --- 2. EXISTING SCRIPTS ---
+    function toggleLocalProfileMenu() {
+        const menu = document.getElementById('localProfileMenu');
+        if (menu.classList.contains('hidden')) { menu.classList.remove('hidden'); } else { menu.classList.add('hidden'); }
+    }
+
+    function openProfilePasswordModal() {
+        document.getElementById('localProfileMenu').classList.add('hidden');
+        if (typeof openGlobalPasswordModal === 'function') { openGlobalPasswordModal(); }
+        else { alert('Password change modal is not available here.'); }
+    }
+
+    function triggerReset() {
+        if (confirm('Are you sure you want to reset the profile picture to default?')) {
+            document.getElementById('resetPhotoForm').submit();
+        }
+    }
+
+    window.addEventListener('click', function(event) {
+        const menu = document.getElementById('localProfileMenu');
+        if (menu && !menu.classList.contains('hidden') && !event.target.closest('button[onclick="toggleLocalProfileMenu()"]')) {
+            menu.classList.add('hidden');
+        }
+    });
+
+    const inputImage = document.getElementById('profile_pic_upload');
+    const modal = document.getElementById('cropperModal');
+    const imageElement = document.getElementById('imageToCrop');
+    const cropBtn = document.getElementById('cropImageBtn');
+    const cancelBtn = document.getElementById('cancelCropBtn');
+    const profileForm = document.getElementById('profileForm');
+
+    let cropper = null;
+
+    if (inputImage) {
+        inputImage.addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+                const file = files[0];
+                const url = URL.createObjectURL(file);
+                imageElement.src = url;
+                modal.style.display = 'flex';
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(imageElement, { aspectRatio: 1, viewMode: 1, autoCropArea: 1 });
+            }
+        });
+    }
+
+    cancelBtn.addEventListener('click', function() {
+        modal.style.display = 'none';
+        if (cropper) cropper.destroy();
+        inputImage.value = '';
+    });
+
+    cropBtn.addEventListener('click', function() {
+        if (cropper) {
+            cropper.getCroppedCanvas({ width: 300, height: 300 }).toBlob(function(blob) {
+                const file = new File([blob], "avatar_cropped.png", { type: "image/png" });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                inputImage.files = dataTransfer.files;
+
+                modal.style.display = 'none';
+                cropper.destroy();
+                profileForm.submit();
+            });
+        }
+    });
+
+    // Init validation on load
+    window.onload = function() {
+        const usernameInput = document.querySelector('input[name="username"]');
+        if(usernameInput) validateProfileInput(usernameInput, 'usernameCount', 'usernameError', 15, 5, true);
+
+        const emailInput = document.querySelector('input[name="email"]');
+        if(emailInput) validateProfileInput(emailInput, 'emailCount', 'emailError', 30, 8);
+
+        const fullNameInput = document.querySelector('input[name="full_name"]');
+        if(fullNameInput) validateProfileInput(fullNameInput, 'fullNameCount', null, 35);
+
+        const phoneInput = document.querySelector('input[name="phone"]');
+        if(phoneInput) validateProfileInput(phoneInput, 'phoneCount', null, 15);
+
+        const aboutInput = document.querySelector('textarea[name="about_me"]');
+        if(aboutInput) validateProfileInput(aboutInput, 'aboutCount', null, 250);
+    }
+</script>
+{% endblock %}
