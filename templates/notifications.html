@@ -52,7 +52,8 @@
                             <!-- Sender Avatar -->
                             <div class="flex-shrink-0">
                                  {% if msg.sender.profile_pic and msg.sender.profile_pic != 'default.jpg' %}
-                                    <img src="{{ url_for('static', filename='profile_pics/' + msg.sender.profile_pic) }}" class="w-10 h-10 rounded-full object-cover border border-gray-200">
+                                    <!-- FIXED PATH: uploads/profile_pics/ -->
+                                    <img src="{{ url_for('static', filename='uploads/profile_pics/' + msg.sender.profile_pic) }}" class="w-10 h-10 rounded-full object-cover border border-gray-200">
                                 {% else %}
                                     <div class="w-10 h-10 rounded-full bg-[#FFA07A] flex items-center justify-center text-white font-bold text-sm border border-gray-200">
                                         {{ msg.sender.username[0].upper() }}
@@ -97,7 +98,8 @@
                             <!-- Recipient Avatar -->
                             <div class="flex-shrink-0">
                                  {% if msg.recipient.profile_pic and msg.recipient.profile_pic != 'default.jpg' %}
-                                    <img src="{{ url_for('static', filename='profile_pics/' + msg.recipient.profile_pic) }}" class="w-10 h-10 rounded-full object-cover border border-gray-200 opacity-75">
+                                    <!-- FIXED PATH: uploads/profile_pics/ -->
+                                    <img src="{{ url_for('static', filename='uploads/profile_pics/' + msg.recipient.profile_pic) }}" class="w-10 h-10 rounded-full object-cover border border-gray-200 opacity-75">
                                 {% else %}
                                     <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold text-sm border border-gray-200">
                                         {{ msg.recipient.username[0].upper() }}
@@ -229,7 +231,7 @@
             flashMessages.style.opacity = '0';
             setTimeout(() => flashMessages.remove(), 1000);
         }
-    }, 3000); // 3 seconds delay
+    }, 3000);
 
     function openComposeModal() {
         document.getElementById('composeModal').style.display = 'flex';
