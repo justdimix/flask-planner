@@ -5,6 +5,7 @@
 {% block content %}
     <!-- Include Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Dark Mode support for Flatpickr -->
     <style>
         .flatpickr-confirm-btn {
             background-color: #4f46e5;
@@ -20,22 +21,38 @@
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Simple Dark Mode tweaks for Flatpickr inputs */
+        .dark .flatpickr-input {
+            background-color: #374151; /* gray-700 */
+            color: #f3f4f6; /* gray-100 */
+            border-color: #4b5563; /* gray-600 */
+        }
     </style>
 
     <!-- HEADER SECTION -->
     <div class="flex justify-between items-center mb-6">
         <div>
-            <div class="flex items-center gap-3">
-                <h1 class="text-3xl font-bold text-gray-900">
-                    {% if viewed_user %}
-                        Schedule for: <span class="text-indigo-600 bg-indigo-50 px-2 rounded">{{ viewed_user.username }}</span>
+            <div class="flex items-center gap-4">
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                    {% if viewed_resource %}
+                         Resource: <span class="text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-gray-800 px-2 rounded">{{ viewed_resource.name }}</span>
+                    {% elif viewed_user %}
+                        Schedule for: <span class="text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-gray-800 px-2 rounded">{{ viewed_user.username }}</span>
                     {% else %}
                         My Schedule
                     {% endif %}
                 </h1>
+
+                <!-- ADD TASK BUTTON (Moved here) -->
+                {% if not viewed_user or current_user.is_admin %}
+                <button onclick="openAddTaskModal()" class="flex items-center gap-1 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold shadow-md transition transform hover:scale-105 text-sm">
+                    <span class="text-lg leading-none">+</span> Add Task
+                </button>
+                {% endif %}
             </div>
 
-            <p class="text-gray-500 text-sm mt-1">
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
                 Displaying 2 Weeks:
                 <span class="font-bold">{{ week_days[0].strftime('%d %b') }}</span> -
                 <span class="font-bold">{{ week_days[-1].strftime('%d %b %Y') }}</span>
@@ -48,7 +65,7 @@
         {% if messages %}
             <div id="flash-messages" class="mb-6 space-y-2 transition-opacity duration-1000">
             {% for category, message in messages %}
-                <div class="{{ 'text-green-600 bg-green-100 p-3 rounded-lg border-l-4 border-green-600' if category == 'success' else 'text-red-600 bg-red-100 p-3 rounded-lg border-l-4 border-red-600' }}">
+                <div class="{{ 'text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-200 border-green-600' if category == 'success' else 'text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-200 border-red-600' }} p-3 rounded-lg border-l-4">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -56,164 +73,221 @@
         {% endif %}
     {% endwith %}
 
-    <!-- ADD TASK FORM -->
+    <!-- ADD TASK MODAL (Originally the inline form, now a popup) -->
     {% if not viewed_user or current_user.is_admin %}
-    <div class="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200 relative">
-        <h2 class="text-lg font-semibold mb-4 text-indigo-600">Quick Add Task</h2>
-        <form id="addTaskForm" action="{{ url_for('add_task') }}" method="POST" class="flex flex-wrap gap-4 items-end">
-            {% if viewed_user %}
-                <input type="hidden" name="target_user_id" value="{{ viewed_user.id }}">
+    <div id="addTaskModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+        <div class="relative mx-auto p-6 border w-full max-w-4xl shadow-2xl rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+
+            <div class="flex justify-between items-center mb-6 border-b dark:border-gray-700 pb-2">
+                <h2 class="text-xl font-bold text-indigo-600 dark:text-indigo-400">Create New Task</h2>
+                <button onclick="closeAddTaskModal()" class="text-gray-400 hover:text-red-500 text-3xl font-bold leading-none transition">&times;</button>
+            </div>
+
+            <!-- Form Action Logic -->
+            <!-- Changed items-end to items-start for correct alignment -->
+            {% if viewed_resource %}
+                 <form id="addTaskForm" action="{{ url_for('add_task') }}" method="POST" class="flex flex-wrap gap-4 items-start">
+                 <input type="hidden" name="target_resource_id" value="{{ viewed_resource.id }}">
+            {% else %}
+                 <form id="addTaskForm" action="{{ url_for('add_task') }}" method="POST" class="flex flex-wrap gap-4 items-start">
+                 {% if viewed_user %}
+                    <input type="hidden" name="target_user_id" value="{{ viewed_user.id }}">
+                 {% endif %}
             {% endif %}
 
-            <!-- Color Picker (Added margin-bottom to align) -->
-            <div class="w-[60px] mb-[19px]">
-                <label class="block text-xs font-bold text-gray-700 uppercase">Color</label>
-                <input type="color" name="color" value="#ffffff" class="w-full h-[38px] border p-1 rounded cursor-pointer">
-            </div>
-
-            <div class="flex-grow min-w-[200px]">
-                <label class="block text-xs font-bold text-gray-700 uppercase">Title</label>
-                <input type="text" name="title" id="taskTitle" required maxlength="35"
-                       class="w-full border p-2 rounded text-sm"
-                       oninput="validateInput(this, 'titleCount', 'titleError', 35)">
-                <div class="flex justify-between mt-1">
-                    <span id="titleError" class="text-red-500 text-[10px] font-bold hidden">Invalid!</span>
-                    <span id="titleCount" class="text-gray-400 text-[10px] ml-auto">0/35</span>
+                <!-- Color Picker -->
+                <div class="w-[60px]">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Color</label>
+                    <input type="color" name="color" value="#ffffff" class="w-full h-[38px] border dark:border-gray-600 p-1 rounded cursor-pointer bg-gray-50 dark:bg-gray-700">
                 </div>
-            </div>
 
-            <div class="flex-grow min-w-[200px]">
-                <label class="block text-xs font-bold text-gray-700 uppercase">Description</label>
-                <input type="text" name="description" id="taskDesc" maxlength="350"
-                       class="w-full border p-2 rounded text-sm" placeholder="Optional..."
-                       oninput="validateInput(this, 'descCount', 'descError', 350)">
-                <div class="flex justify-between mt-1">
-                     <span id="descError" class="text-red-500 text-[10px] font-bold hidden">Invalid!</span>
-                     <span id="descCount" class="text-gray-400 text-[10px] ml-auto">0/350</span>
+                <!-- Title -->
+                <div class="flex-grow min-w-[200px]">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Title</label>
+                    <input type="text" name="title" id="taskTitle" required maxlength="35"
+                           class="w-full border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-indigo-500"
+                           oninput="validateInput(this, 'titleCount', 'titleError', 35)">
+                    <div class="flex justify-between mt-1">
+                        <span id="titleError" class="text-red-500 text-[10px] font-bold hidden">Invalid!</span>
+                        <span id="titleCount" class="text-gray-400 dark:text-gray-500 text-[10px] ml-auto">0/35</span>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Start Time (Added margin-bottom to align) -->
-            <div class="w-[180px] mb-[19px]">
-                <label class="block text-xs font-bold text-gray-700 uppercase">Start</label>
-                <input type="text" name="start_time" id="taskStart" required class="w-full border p-2 rounded text-sm flatpickr-input bg-white" placeholder="Select time...">
-            </div>
+                <!-- Description -->
+                <div class="flex-grow min-w-[250px]">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Description</label>
+                    <input type="text" name="description" id="taskDesc" maxlength="350"
+                           class="w-full border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-indigo-500" placeholder="Optional..."
+                           oninput="validateInput(this, 'descCount', 'descError', 350)">
+                    <div class="flex justify-between mt-1">
+                         <span id="descError" class="text-red-500 text-[10px] font-bold hidden">Invalid!</span>
+                         <span id="descCount" class="text-gray-400 dark:text-gray-500 text-[10px] ml-auto">0/350</span>
+                    </div>
+                </div>
 
-            <!-- End Time (Added margin-bottom to align) -->
-            <div class="w-[180px] mb-[19px]">
-                <label class="block text-xs font-bold text-gray-700 uppercase">End</label>
-                <input type="text" name="end_time" id="taskEnd" required class="w-full border p-2 rounded text-sm flatpickr-input bg-white" placeholder="Select time...">
-            </div>
+                <div class="w-full h-0 basis-full"></div> <!-- Line break for inputs -->
 
-            {% if current_user.is_admin %}
-            <!-- Admin Assignment Panel -->
-            <div class="w-[250px] bg-gray-50 p-2 rounded border border-gray-200">
-                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Assign To:</label>
-                <div class="space-y-1 text-xs">
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="radio" name="assignment_mode" value="me" checked class="text-indigo-600" onchange="hideCustomLabel()">
-                        <span>
-                            {% if viewed_user and viewed_user.id != current_user.id %}
-                                Current ({{ viewed_user.username }})
-                            {% else %}
-                                Only Me
+                <!-- Start Time -->
+                <div class="w-[180px]">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Start</label>
+                    <input type="text" name="start_time" id="taskStart" required class="w-full border border-gray-300 dark:border-gray-600 p-2 rounded text-sm flatpickr-input bg-white dark:bg-gray-700 dark:text-white" placeholder="Select time...">
+                </div>
+
+                <!-- End Time -->
+                <div class="w-[180px]">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">End</label>
+                    <input type="text" name="end_time" id="taskEnd" required class="w-full border border-gray-300 dark:border-gray-600 p-2 rounded text-sm flatpickr-input bg-white dark:bg-gray-700 dark:text-white" placeholder="Select time...">
+                </div>
+
+                <!-- Recurrence Options -->
+                <div class="w-[120px]">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Repeat</label>
+                    <select name="recurrence" class="w-full border border-gray-300 dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white" onchange="toggleUntilDate(this)">
+                        <option value="none">None</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                <div class="w-[140px] hidden" id="untilDateDiv">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Until</label>
+                    <input type="date" name="recurrence_end" class="w-full border border-gray-300 dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white">
+                </div>
+
+                {% if current_user.is_admin and not viewed_resource %}
+                <!-- Admin Assignment Panel -->
+                <div class="w-[250px] bg-gray-50 dark:bg-gray-700 p-2 rounded border border-gray-200 dark:border-gray-600 ml-auto">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Assign To:</label>
+                    <div class="space-y-1 text-xs text-gray-900 dark:text-gray-200">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="assignment_mode" value="me" checked class="text-indigo-600 dark:text-indigo-400" onchange="hideCustomLabel()">
+                            <span>
+                                {% if viewed_user and viewed_user.id != current_user.id %}
+                                    Current ({{ viewed_user.username }})
+                                {% else %}
+                                    Only Me
+                                {% endif %}
+                            </span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="assignment_mode" value="all_admins" class="text-indigo-600 dark:text-indigo-400" onchange="hideCustomLabel()">
+                            <span>All Admins</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="assignment_mode" value="all_users" class="text-indigo-600 dark:text-indigo-400" onchange="hideCustomLabel()">
+                            <span class="font-bold text-indigo-700 dark:text-indigo-300">All Users (Global)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="assignment_mode" value="custom" id="radioCustom" onclick="openCustomModal()" class="text-indigo-600 dark:text-indigo-400">
+                            <span>Custom / Resources...</span>
+                        </label>
+
+                        <div id="customCountMsg" class="text-gray-500 dark:text-gray-400 ml-6 hidden font-medium" style="font-size: 10px;">
+                            Assigned to <span id="customCountVal" class="text-indigo-600 dark:text-indigo-400 font-bold">0</span> users
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CUSTOM USER SELECTION MODAL -->
+                <div id="customUsersModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+                    <div class="relative mx-auto p-6 border w-80 shadow-2xl rounded-xl bg-white dark:bg-gray-800 dark:border-gray-700 flex flex-col max-h-[80vh]">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 text-center">Select Targets</h3>
+
+                        <!-- SEARCH BAR -->
+                        <input type="text" placeholder="Search..." class="w-full border border-gray-300 dark:border-gray-600 rounded mb-2 px-2 py-1 text-sm bg-white dark:bg-gray-700 dark:text-white" onkeyup="filterCustomTaskUsers(this)">
+
+                        <div class="overflow-y-auto flex-grow border border-gray-200 dark:border-gray-600 rounded p-2 mb-4 bg-white dark:bg-gray-700">
+
+                            <!-- RESOURCES SECTION -->
+                            {% if all_resources %}
+                                <div class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase mb-1 mt-2">Resources</div>
+                                {% for res in all_resources %}
+                                <label class="flex items-center space-x-3 mb-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 p-2 rounded transition custom-task-user-item">
+                                    <input type="checkbox" name="selected_resources" value="{{ res.id }}" class="rounded text-green-600 focus:ring-green-500 h-4 w-4" onchange="updateCustomCount()">
+                                    <span class="text-sm text-gray-700 dark:text-gray-200 font-medium username-text">🏢 {{ res.name }}</span>
+                                </label>
+                                {% endfor %}
+                                <div class="border-b dark:border-gray-600 my-2"></div>
                             {% endif %}
-                        </span>
-                    </label>
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="radio" name="assignment_mode" value="all_admins" class="text-indigo-600" onchange="hideCustomLabel()">
-                        <span>All Admins</span>
-                    </label>
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="radio" name="assignment_mode" value="all_users" class="text-indigo-600" onchange="hideCustomLabel()">
-                        <span class="font-bold text-indigo-700">All Users (Global)</span>
-                    </label>
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="radio" name="assignment_mode" value="custom" id="radioCustom" onclick="openCustomModal()" class="text-indigo-600">
-                        <span>Custom...</span>
-                    </label>
 
-                    <div id="customCountMsg" class="text-gray-500 ml-6 hidden font-medium" style="font-size: 10px;">
-                        Assigned to <span id="customCountVal" class="text-indigo-600 font-bold">0</span> users
+                            <!-- USERS SECTION -->
+                            <div class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase mb-1">Users</div>
+                            {% if all_users %}
+                                {% for user in all_users %}
+                                <label class="flex items-center space-x-3 mb-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 p-2 rounded transition custom-task-user-item">
+                                    <input type="checkbox" name="selected_users" value="{{ user.id }}" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4" onchange="updateCustomCount()">
+                                    <span class="text-sm text-gray-700 dark:text-gray-200 font-medium username-text">{{ user.username }}</span>
+                                </label>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-xs text-gray-400 text-center">No users found.</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex justify-center pt-2 border-t border-gray-100 dark:border-gray-600">
+                            <button type="button" onclick="closeCustomModal()" class="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-md hover:bg-indigo-700 font-bold text-sm shadow-md transition transform hover:scale-105">
+                                Done
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+                {% endif %}
 
-            <!-- CUSTOM USER SELECTION MODAL -->
-            <div id="customUsersModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-                <div class="relative mx-auto p-6 border w-80 shadow-2xl rounded-xl bg-white flex flex-col max-h-[80vh]">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4 text-center">Select Users</h3>
-
-                    <!-- SEARCH BAR -->
-                    <input type="text" placeholder="Search users..." class="w-full border border-gray-300 rounded mb-2 px-2 py-1 text-sm" onkeyup="filterCustomTaskUsers(this)">
-
-                    <div class="overflow-y-auto flex-grow border border-gray-200 rounded p-2 mb-4">
-                        {% if all_users %}
-                            {% for user in all_users %}
-                            <label class="flex items-center space-x-3 mb-2 cursor-pointer hover:bg-gray-50 p-2 rounded transition custom-task-user-item">
-                                <input type="checkbox" name="selected_users" value="{{ user.id }}" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4" onchange="updateCustomCount()">
-                                <span class="text-sm text-gray-700 font-medium username-text">{{ user.username }}</span>
-                            </label>
-                            {% endfor %}
-                        {% else %}
-                            <p class="text-xs text-gray-400 text-center">No users found.</p>
-                        {% endif %}
-                    </div>
-
-                    <div class="flex justify-center pt-2 border-t border-gray-100">
-                        <button type="button" onclick="closeCustomModal()" class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-bold text-sm shadow-md transition transform hover:scale-105">
-                            Done
-                        </button>
-                    </div>
+                <!-- Add Button -->
+                <div class="w-full flex justify-end mt-4 pt-4 border-t dark:border-gray-700">
+                    <button type="submit" id="addTaskSubmitBtn" class="bg-indigo-600 dark:bg-indigo-500 text-white py-3 px-8 rounded hover:bg-indigo-700 font-bold disabled:opacity-50 disabled:cursor-not-allowed transition transform hover:scale-105 shadow-md">
+                        Create Task
+                    </button>
                 </div>
-            </div>
-            {% endif %}
-
-            <!-- Add Button (Added margin-bottom to align) -->
-            <button type="submit" id="addTaskSubmitBtn" class="bg-indigo-600 text-white py-2 px-6 rounded hover:bg-indigo-700 font-bold h-fit self-end mb-[19px] disabled:opacity-50 disabled:cursor-not-allowed">Add</button>
-        </form>
+            </form>
+        </div>
     </div>
     {% endif %}
 
     <!-- NAVIGATION BUTTONS -->
     <div class="flex justify-between items-center mb-4 px-2">
-        {% if viewed_user %}
-            <a href="{{ url_for('admin_view_user', user_id=viewed_user.id, offset=current_offset-1) }}" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-50 transition shadow-sm no-underline">
+        {% if viewed_resource %}
+            <a href="{{ url_for('view_resource_calendar', id=viewed_resource.id, offset=current_offset-1) }}" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm no-underline">
                 ← Previous Week
             </a>
-
-            <a href="{{ url_for('admin_view_user', user_id=viewed_user.id, offset=current_offset+1) }}" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-50 transition shadow-sm no-underline">
+            <a href="{{ url_for('view_resource_calendar', id=viewed_resource.id, offset=current_offset+1) }}" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm no-underline">
+                Next Week →
+            </a>
+        {% elif viewed_user %}
+            <a href="{{ url_for('admin_view_user', user_id=viewed_user.id, offset=current_offset-1) }}" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm no-underline">
+                ← Previous Week
+            </a>
+            <a href="{{ url_for('admin_view_user', user_id=viewed_user.id, offset=current_offset+1) }}" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm no-underline">
                 Next Week →
             </a>
         {% else %}
-            <a href="{{ url_for('calendar_view', offset=current_offset-1) }}" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-50 transition shadow-sm no-underline">
+            <a href="{{ url_for('calendar_view', offset=current_offset-1) }}" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm no-underline">
                 ← Previous Week
             </a>
-
-            <a href="{{ url_for('calendar_view', offset=current_offset+1) }}" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-50 transition shadow-sm no-underline">
+            <a href="{{ url_for('calendar_view', offset=current_offset+1) }}" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm no-underline">
                 Next Week →
             </a>
         {% endif %}
     </div>
 
     <!-- CALENDAR CONTAINER (ABSOLUTE LAYOUT) -->
-    <div class="border border-gray-200 rounded-lg bg-white shadow-lg overflow-hidden flex flex-col" style="height: 620px;">
+    <div class="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-lg overflow-hidden flex flex-col" style="height: 620px;">
 
         <!-- HEADER: Days (Sticky Top) -->
-        <div class="flex flex-none border-b border-gray-200 bg-gray-50 overflow-hidden" style="padding-right: 17px;">
+        <div class="flex flex-none border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-hidden" style="padding-right: 17px;">
             <!-- Time Corner -->
-            <div class="flex-none w-16 border-r border-gray-200 bg-white z-20 flex items-end justify-center pb-2 text-xs font-bold text-gray-400">Time</div>
+            <div class="flex-none w-16 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 z-20 flex items-end justify-center pb-2 text-xs font-bold text-gray-400">Time/Date</div>
 
             <!-- Days Header Scroller -->
             <div class="flex flex-auto overflow-hidden" id="headerScrollSync">
                 <div class="flex flex-nowrap">
                     {% for day in week_days %}
                         <!-- Fixed width 101px per day -->
-                        <div class="flex-none w-[101px] py-2 text-center border-r border-gray-200 border-dashed bg-white
-                            {{ 'border-r-4 border-r-gray-400' if loop.index == 7 else 'border-r' }}
-                            {{ 'bg-indigo-100 text-indigo-800' if day == current_date else 'text-gray-600' }}">
-                            <div class="text-[10px] uppercase font-bold {{ 'text-indigo-600' if day == current_date else 'text-gray-500' }}">{{ day.strftime('%a') }}</div>
-                            <div class="text-sm font-bold {{ 'text-indigo-800' if day == current_date else 'text-gray-800' }}">{{ day.strftime('%d') }}</div>
+                        <div class="flex-none w-[101px] py-2 text-center border-r border-gray-200 dark:border-gray-700 border-dashed bg-white dark:bg-gray-800
+                            {{ 'border-r-4 border-r-gray-400 dark:border-r-gray-500' if loop.index == 7 else 'border-r' }}
+                            {{ 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200' if day == current_date else 'text-gray-600 dark:text-gray-300' }}">
+                            <div class="text-[10px] uppercase font-bold {{ 'text-indigo-600 dark:text-indigo-300' if day == current_date else 'text-gray-500 dark:text-gray-400' }}">{{ day.strftime('%a') }}</div>
+                            <div class="text-sm font-bold {{ 'text-indigo-800 dark:text-indigo-100' if day == current_date else 'text-gray-800 dark:text-gray-200' }}">{{ day.strftime('%d') }}</div>
                         </div>
                     {% endfor %}
                 </div>
@@ -224,11 +298,15 @@
         <div class="flex flex-auto overflow-y-auto overflow-x-auto relative" id="bodyScrollSync" onscroll="syncScroll()">
 
             <!-- Time Sidebar (Sticky Left) -->
-            <div class="flex-none w-16 border-r border-gray-200 bg-white sticky left-0 z-10">
+            <div class="flex-none w-16 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky left-0 z-10">
                 {% for slot in time_slots %}
                     <!-- Exact 20px height per 30-min slot -->
-                    <div class="h-[20px] border-b border-gray-100 border-dashed text-right pr-2 leading-[20px] box-border
-                        {% if slot.minute == 0 %} text-[13px] font-bold text-gray-600 {% else %} text-[11px] font-normal text-gray-400 {% endif %}">
+                    <div class="h-[20px] border-b border-gray-100 dark:border-gray-700 border-dashed text-right pr-2 leading-[20px] box-border
+                        {% if slot.minute == 0 %}
+                            text-[13px] font-bold text-gray-600 dark:text-gray-300
+                        {% else %}
+                            text-[11px] font-normal text-gray-400 dark:text-gray-500
+                        {% endif %}">
                         {{ slot.strftime('%H:%M') }}
                     </div>
                 {% endfor %}
@@ -238,13 +316,13 @@
             <div class="flex flex-nowrap relative">
                 {% for day in week_days %}
                     <!-- DAY COLUMN (101px) -->
-                    <div class="flex-none w-[101px] relative border-dashed border-gray-200
-                        {{ 'border-r-4 border-r-gray-400' if loop.index == 7 else 'border-r' }}">
+                    <div class="flex-none w-[101px] relative border-dashed border-gray-200 dark:border-gray-700
+                        {{ 'border-r-4 border-r-gray-400 dark:border-r-gray-500' if loop.index == 7 else 'border-r' }}">
 
                         <!-- BACKGROUND GRID LINES (Layer 0) -->
                         <div class="absolute inset-0 z-0 flex flex-col">
                             {% for slot in time_slots %}
-                                <div class="h-[20px] w-full border-b border-gray-100 border-dashed box-border"></div>
+                                <div class="h-[20px] w-full border-b border-gray-100 dark:border-gray-700 border-dashed box-border"></div>
                             {% endfor %}
                         </div>
 
@@ -253,18 +331,18 @@
                             {% for task in tasks_by_date[day] %}
                                 <!-- Absolute Div for Task -->
                                 <div class="absolute left-0.5 right-0.5 rounded-lg shadow-sm border overflow-hidden group pointer-events-auto
-                                    {{ 'border-yellow-600' if task.is_admin_task else 'border-gray-400' }}"
+                                    {{ 'border-yellow-600' if task.is_admin_task else 'border-gray-500 dark:border-gray-600' }}"
                                      style="top: {{ task.style_top }}px; height: {{ task.style_height }}px; z-index: 20; background-color: {{ task.color if task.color else '#ffffff' }};">
 
-                                    <div class="p-1 h-full flex flex-col justify-start leading-tight relative">
+                                    <div class="p-1 h-full flex flex-col justify-start leading-tight relative text-gray-900">
                                         <!-- TITLE: 14px -->
-                                        <div class="font-bold truncate text-[14px] text-gray-900 mb-0.5" title="{{ task.title }}">
+                                        <div class="font-bold truncate text-[14px] mb-0.5 mix-blend-darken" title="{{ task.title }}">
                                             {{ task.title }}
                                         </div>
 
                                         <!-- TIME: 11px -->
-                                        <div class="flex justify-between items-center w-full">
-                                            <span class="font-medium truncate opacity-90 text-[11px] text-gray-600">
+                                        <div class="flex justify-between items-center w-full text-black/70">
+                                            <span class="font-medium truncate opacity-90 text-[11px]">
                                                 {{ task.start_time.strftime('%H:%M') }} - {{ task.end_time.strftime('%H:%M') }}
                                             </span>
                                             {% if task.is_admin_task %}
@@ -275,7 +353,7 @@
                                         <!-- HEDGEHOG BUTTON (Absolute bottom right of task) -->
                                         <button
                                             type="button"
-                                            class="absolute bottom-0 right-0 text-lg leading-none hover:scale-125 transition transform cursor-pointer p-0.5"
+                                            class="absolute bottom-0 right-0 text-lg leading-none hover:scale-125 transition transform cursor-pointer p-0.5 text-black"
                                             onclick="openTaskDetails(this)"
                                             data-id="{{ task.id }}"
                                             data-title="{{ task.title }}"
@@ -283,8 +361,8 @@
                                             data-start="{{ task.start_time.strftime('%Y-%m-%d %H:%M') }}"
                                             data-end="{{ task.end_time.strftime('%Y-%m-%d %H:%M') }}"
                                             data-created="{{ task.created_at.strftime('%Y-%m-%d %H:%M') if task.created_at else 'Unknown' }}"
-                                            data-author="{{ task.author.username }}"
-                                            data-role="{{ 'Super Admin' if task.author.is_super_admin else ('Admin' if task.author.is_admin else 'User') }}"
+                                            data-author="{{ task.author.username if task.author else 'Resource' }}"
+                                            data-role="{{ 'Super Admin' if task.author and task.author.is_super_admin else ('Admin' if task.author and task.author.is_admin else 'User') }}"
                                             data-can-edit="{{ 'true' if current_user.is_admin or (task.user_id == current_user.id and not task.is_admin_task) else 'false' }}"
                                             data-can-delete="{{ 'true' if current_user.is_admin or task.user_id == current_user.id else 'false' }}"
                                         >
@@ -302,39 +380,39 @@
 
     <!-- MODAL: TASK DETAILS (HEDGEHOG) -->
     <div id="taskDetailsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-        <div class="relative mx-auto p-8 border w-[500px] shadow-2xl rounded-xl bg-white text-center">
+        <div class="relative mx-auto p-8 border w-[500px] shadow-2xl rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-center">
             <!-- Close Button -->
             <button onclick="document.getElementById('taskDetailsModal').style.display='none'" class="absolute right-4 top-4 text-gray-400 hover:text-red-500 text-4xl font-bold leading-none transition">&times;</button>
 
-            <div class="flex justify-center items-center mb-6 border-b pb-4 mt-2">
-                <h3 class="text-3xl font-black text-gray-900" id="detailTitle">Task Title</h3>
+            <div class="flex justify-center items-center mb-6 border-b dark:border-gray-700 pb-4 mt-2">
+                <h3 class="text-3xl font-black text-gray-900 dark:text-white" id="detailTitle">Task Title</h3>
             </div>
 
-            <div class="space-y-6 text-gray-800">
-                <!-- Meta Info: Super Bold -->
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <p class="text-sm font-extrabold uppercase text-gray-500 mb-1">Created By</p>
+            <div class="space-y-6 text-gray-800 dark:text-gray-200">
+                <!-- Meta Info -->
+                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <p class="text-sm font-extrabold uppercase text-gray-500 dark:text-gray-400 mb-1">Created By</p>
                     <p class="text-lg font-black">
                         <span id="detailAuthor"></span>
                         <span class="mx-2 text-gray-400">-</span>
-                        <span id="detailRole" class="text-indigo-700"></span>
+                        <span id="detailRole" class="text-indigo-700 dark:text-indigo-300"></span>
                     </p>
 
-                    <p class="text-sm font-extrabold uppercase text-gray-500 mt-4 mb-1">Time</p>
-                    <p class="text-lg font-black text-indigo-900" id="detailTime"></p>
+                    <p class="text-sm font-extrabold uppercase text-gray-500 dark:text-gray-400 mt-4 mb-1">Time</p>
+                    <p class="text-lg font-black text-indigo-900 dark:text-indigo-200" id="detailTime"></p>
 
                     <p class="text-xs font-bold text-gray-400 mt-2">Created At: <span id="detailCreated"></span></p>
                 </div>
 
                 <!-- Description -->
-                <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 text-left">
-                    <p class="text-xs font-extrabold uppercase text-gray-500 mb-2">Details</p>
-                    <p id="detailDesc" class="text-gray-700 whitespace-pre-wrap leading-relaxed text-base font-serif italic"></p>
+                <div class="bg-gray-50 dark:bg-gray-700 p-5 rounded-lg border border-gray-200 dark:border-gray-600 text-left">
+                    <p class="text-xs font-extrabold uppercase text-gray-500 dark:text-gray-400 mb-2">Details</p>
+                    <p id="detailDesc" class="text-gray-700 dark:text-gray-200 whitespace-pre-wrap leading-relaxed text-base font-serif italic"></p>
                 </div>
             </div>
 
             <!-- Actions Footer -->
-            <div class="flex flex-col items-center gap-3 mt-8 border-t pt-6" id="detailActions">
+            <div class="flex flex-col items-center gap-3 mt-8 border-t dark:border-gray-700 pt-6" id="detailActions">
                 <!-- Dynamic buttons -->
             </div>
         </div>
@@ -342,14 +420,23 @@
 
     <!-- MODAL: CONFLICT DETECTED -->
     <div id="conflictModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
-        <div class="relative mx-auto p-8 border w-[450px] shadow-2xl rounded-xl bg-white text-center border-red-500 border-2">
+        <div class="relative mx-auto p-8 border w-[450px] shadow-2xl rounded-xl bg-white dark:bg-gray-800 text-center border-red-500 border-2">
             <div class="mt-3 text-center">
-                <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-100 mb-6"><span class="text-5xl">❗</span></div>
+                <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-100 mb-6">
+                    <span class="text-5xl">❗</span>
+                </div>
                 <h3 class="text-2xl font-black text-red-600 mb-4">Conflict Detected!</h3>
-                <p class="text-lg font-bold text-gray-800 leading-relaxed">This time slot is already occupied,<br>are you sure you want to proceed?</p>
+                <p class="text-lg font-bold text-gray-800 dark:text-gray-200 leading-relaxed">
+                    This time slot is already occupied,<br>are you sure you want to proceed?
+                </p>
+
                 <div class="mt-8 flex justify-center gap-4">
-                    <button id="conflictYesBtn" class="bg-red-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-red-700 transition transform hover:scale-105 shadow-md">YES</button>
-                    <button id="conflictNoBtn" class="bg-gray-200 text-gray-800 px-8 py-3 rounded-lg font-bold hover:bg-gray-300 transition">NO</button>
+                    <button id="conflictYesBtn" class="bg-red-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-red-700 transition transform hover:scale-105 shadow-md">
+                        YES
+                    </button>
+                    <button id="conflictNoBtn" class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100 px-8 py-3 rounded-lg font-bold hover:bg-gray-300 transition">
+                        NO
+                    </button>
                 </div>
             </div>
         </div>
@@ -357,12 +444,20 @@
 
     <!-- MODAL: WARNING TASK -->
     <div id="warningModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-        <div class="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
             <div class="mt-3 text-center">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100"><span class="text-2xl">⚠️</span></div>
-                <h3 class="text-lg font-medium text-gray-900 mt-4">Multi-day Task Detected</h3>
-                <div class="mt-2 text-sm text-gray-500"><p>You are creating a task <span id="modalTaskTitle" class="font-bold"></span> that spans across multiple days or outside working hours (07:00-21:00).</p><p class="mt-2">Do you want to automatically adapt this into multiple segments fitting the schedule?</p></div>
-                <div class="mt-4 flex flex-col gap-2"><button id="confirmBtn" class="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700">Yes, Auto-Adapt Schedule</button><button id="cancelBtn" class="w-full bg-gray-100 text-gray-700 py-2 rounded-md hover:bg-gray-200">Cancel</button></div>
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+                    <span class="text-2xl">⚠️</span>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mt-4">Multi-day Task Detected</h3>
+                <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    <p>You are creating a task <span id="modalTaskTitle" class="font-bold"></span> that spans across multiple days or outside working hours (07:00-21:00).</p>
+                    <p class="mt-2">Do you want to automatically adapt this into multiple segments fitting the schedule?</p>
+                </div>
+                <div class="mt-4 flex flex-col gap-2">
+                    <button id="confirmBtn" class="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700">Yes, Auto-Adapt Schedule</button>
+                    <button id="cancelBtn" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 py-2 rounded-md hover:bg-gray-200">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
@@ -382,11 +477,22 @@
                     const btn = document.createElement("div");
                     btn.innerHTML = "OK";
                     btn.className = "flatpickr-confirm-btn";
-                    btn.addEventListener("click", function() { instance.close(); });
+                    btn.addEventListener("click", function() {
+                        instance.close();
+                    });
                     instance.calendarContainer.appendChild(btn);
                 }
             });
         });
+
+        // Functions to handle Add Task Modal
+        function openAddTaskModal() {
+            document.getElementById('addTaskModal').style.display = 'flex';
+        }
+
+        function closeAddTaskModal() {
+            document.getElementById('addTaskModal').style.display = 'none';
+        }
 
         // Clear URL Params on load (Reset on Refresh logic)
         if (window.history.replaceState) {
@@ -422,10 +528,28 @@
             const list = document.getElementById('customUserList');
             if(list) list.style.display = show ? 'block' : 'none';
         }
-        function openCustomModal() { document.getElementById('customUsersModal').style.display = 'flex'; updateCustomCount(); }
-        function closeCustomModal() { document.getElementById('customUsersModal').style.display = 'none'; updateCustomCount(); document.getElementById('radioCustom').checked = true; document.getElementById('customCountMsg').style.display = 'block'; }
-        function updateCustomCount() { const checkboxes = document.querySelectorAll('input[name="selected_users"]:checked'); document.getElementById('customCountVal').innerText = checkboxes.length; }
-        function hideCustomLabel() { document.getElementById('customCountMsg').style.display = 'none'; }
+
+        function openCustomModal() {
+            document.getElementById('customUsersModal').style.display = 'flex';
+            updateCustomCount();
+        }
+
+        function closeCustomModal() {
+            document.getElementById('customUsersModal').style.display = 'none';
+            updateCustomCount();
+            document.getElementById('radioCustom').checked = true;
+            document.getElementById('customCountMsg').style.display = 'block';
+        }
+
+        function updateCustomCount() {
+            const userChecks = document.querySelectorAll('input[name="selected_users"]:checked').length;
+            const resChecks = document.querySelectorAll('input[name="selected_resources"]:checked').length;
+            document.getElementById('customCountVal').innerText = userChecks + resChecks;
+        }
+
+        function hideCustomLabel() {
+             document.getElementById('customCountMsg').style.display = 'none';
+        }
 
         function filterCustomTaskUsers(input) {
             const filter = input.value.toLowerCase();
@@ -474,6 +598,21 @@
             }
         }
 
+        function toggleUntilDate(select) {
+            const untilDiv = document.getElementById('untilDateDiv');
+            if (select.value === 'none') {
+                untilDiv.classList.add('hidden');
+            } else {
+                untilDiv.classList.remove('hidden');
+                const dateInput = untilDiv.querySelector('input');
+                if(!dateInput.value) {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() + 1);
+                    dateInput.value = d.toISOString().split('T')[0];
+                }
+            }
+        }
+
         const ALAN_WATTS_QUOTE = `A person who thinks all the time\nHas nothing to think about except thoughts\nSo, he loses touch with reality and lives in a world of illusions\nBy thoughts I mean specifically, chatter in the skull`;
         function openTaskDetails(btn) {
             const id = btn.getAttribute('data-id');
@@ -485,6 +624,7 @@
             const author = btn.getAttribute('data-author');
             const role = btn.getAttribute('data-role');
             const canEdit = btn.getAttribute('data-can-edit') === 'true';
+            const canDelete = btn.getAttribute('data-can-delete') === 'true';
 
             document.getElementById('detailTitle').innerText = title;
             document.getElementById('detailAuthor').innerText = author;

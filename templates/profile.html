@@ -6,15 +6,15 @@
 <!-- Include Cropper.js CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 
-<div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-100 relative">
+<div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 relative transition-colors duration-300">
 
     <!-- HEADER WITH SETTINGS GEAR -->
     <div class="relative mb-8 flex justify-center items-center">
-        <h1 class="text-3xl font-bold text-gray-900">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
             {% if user.id == current_user.id %}
                 My Profile
             {% else %}
-                <span class="text-indigo-600">{{ user.username }}</span>
+                <span class="text-indigo-600 dark:text-indigo-400">{{ user.username }}</span>
             {% endif %}
         </h1>
 
@@ -22,19 +22,22 @@
         {% if user.id == current_user.id %}
         <div class="absolute right-0 top-0">
             <div class="relative">
-                <button onclick="toggleLocalProfileMenu()" class="text-gray-400 hover:text-gray-600 focus:outline-none transition transform hover:rotate-90 p-2" title="Profile Options">
+                <button onclick="toggleLocalProfileMenu()" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none transition transform hover:rotate-90 p-2" title="Profile Options">
                     <span class="text-2xl">⚙️</span>
                 </button>
 
-                <div id="localProfileMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl ring-1 ring-black ring-opacity-5 z-20 border border-gray-100">
+                <!-- Dropdown Menu -->
+                <div id="localProfileMenu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-xl ring-1 ring-black ring-opacity-5 z-20 border border-gray-100 dark:border-gray-700">
                     <div class="py-1">
-                        <button onclick="openGlobalPasswordModal()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700">
+                        <!-- Opens the Global Password Modal defined in base.html -->
+                        <button onclick="openGlobalPasswordModal()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-gray-700 hover:text-indigo-700 dark:hover:text-indigo-300 transition">
                             🔒 Change Password
                         </button>
 
+                        <!-- Delete Account Button -->
                         <form action="{{ url_for('delete_task', task_id=0) }}" method="POST" onsubmit="return confirm('CRITICAL WARNING:\n\nAre you sure you want to DELETE your account?\n\nThis action cannot be undone. All your tasks will be lost.');">
                             <input type="hidden" name="action" value="delete_self">
-                            <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-800">
+                            <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-gray-700 hover:text-red-800 transition">
                                 🗑️ Delete Account
                             </button>
                         </form>
@@ -50,16 +53,18 @@
 
         <!-- Left Column: Avatar & Status -->
         <div class="flex flex-col items-center gap-4 w-full md:w-1/3">
+
+            <!-- Avatar Container -->
             <div class="relative w-40 h-40 group">
                 {% if user.profile_pic and user.profile_pic != 'default.jpg' %}
                     <img id="avatarPreview" src="{{ url_for('static', filename='uploads/profile_pics/' + user.profile_pic) }}"
                          alt="Profile Picture"
-                         class="w-40 h-40 rounded-full object-cover border-4 border-indigo-100 shadow-md">
+                         class="w-40 h-40 rounded-full object-cover border-4 border-indigo-100 dark:border-indigo-900 shadow-md">
                 {% else %}
-                    <div id="avatarPlaceholder" class="w-40 h-40 rounded-full bg-[#FFA07A] flex items-center justify-center text-white font-bold text-6xl border-4 border-indigo-100 shadow-md">
+                    <div id="avatarPlaceholder" class="w-40 h-40 rounded-full bg-[#FFA07A] flex items-center justify-center text-white font-bold text-6xl border-4 border-indigo-100 dark:border-indigo-900 shadow-md">
                         {{ user.username[0].upper() }}
                     </div>
-                    <img id="avatarPreview" src="" class="hidden w-40 h-40 rounded-full object-cover border-4 border-indigo-100 shadow-md">
+                    <img id="avatarPreview" src="" class="hidden w-40 h-40 rounded-full object-cover border-4 border-indigo-100 dark:border-indigo-900 shadow-md">
                 {% endif %}
 
                 {% if can_edit %}
@@ -84,10 +89,11 @@
                 </div>
             </div>
 
+            <!-- STATUS DROPDOWN -->
             <div class="w-full text-center">
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Status</label>
-                <select name="work_status" class="block w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 text-center"
-                        {% if not can_change_status %}disabled class="bg-gray-100 cursor-not-allowed w-full border border-gray-300 rounded-md p-2 text-center text-gray-500"{% endif %}>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Status</label>
+                <select name="work_status" class="block w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 text-center bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        {% if not can_change_status %}disabled class="bg-gray-100 dark:bg-gray-600 cursor-not-allowed w-full border border-gray-300 dark:border-gray-500 rounded-md p-2 text-center text-gray-500 dark:text-gray-300"{% endif %}>
                     <option value="Office" {% if user.work_status == 'Office' %}selected{% endif %}>🏢 Working (Office)</option>
                     <option value="Home" {% if user.work_status == 'Home' %}selected{% endif %}>🏠 Working (Home)</option>
                     <option value="Sick" {% if user.work_status == 'Sick' %}selected{% endif %}>🤒 Sick Leave</option>
@@ -99,7 +105,7 @@
             {% if (user.id == current_user.id or current_user.is_super_admin) and user.profile_pic and user.profile_pic != 'default.jpg' %}
                 <button type="button"
                         onclick="triggerReset()"
-                        class="text-xs text-red-500 hover:text-red-700 font-bold underline cursor-pointer bg-transparent border-0 p-0 mt-1">
+                        class="text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-bold underline cursor-pointer bg-transparent border-0 p-0 mt-1">
                     Reset Photo to Default
                 </button>
             {% endif %}
@@ -109,81 +115,81 @@
         <div class="w-full md:w-2/3 space-y-5">
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Username (5-15 chars, strict regex) -->
+                <!-- Username -->
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Username</label>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Username</label>
                     <input type="text" name="username" value="{{ user.username }}" required minlength="5" maxlength="15"
-                           class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
                            oninput="validateProfileInput(this, 'usernameCount', 'usernameError', 15, 5, true)"
                            {% if not can_edit %}disabled{% endif %}>
                     <div class="flex justify-between mt-1">
                         <span id="usernameError" class="text-red-500 text-[10px] font-bold hidden">Invalid!</span>
-                        <span id="usernameCount" class="text-gray-400 text-[10px] ml-auto">0/15</span>
+                        <span id="usernameCount" class="text-gray-400 dark:text-gray-500 text-[10px] ml-auto">0/15</span>
                     </div>
                 </div>
 
-                <!-- Email (8-30 chars) -->
+                <!-- Email -->
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Email</label>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Email</label>
                     <input type="email" name="email" value="{{ user.email }}" required minlength="8" maxlength="30"
-                           class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
                            oninput="validateProfileInput(this, 'emailCount', 'emailError', 30, 8)"
                            {% if not can_edit %}disabled{% endif %}>
                     <div class="flex justify-between mt-1">
                          <span id="emailError" class="text-red-500 text-[10px] font-bold hidden">Invalid length!</span>
-                        <span id="emailCount" class="text-gray-400 text-[10px] ml-auto">0/30</span>
+                        <span id="emailCount" class="text-gray-400 dark:text-gray-500 text-[10px] ml-auto">0/30</span>
                     </div>
                 </div>
             </div>
 
             <!-- Full Name & Phone -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Full Name (Max 35) -->
+                <!-- Full Name -->
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Full Name</label>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
                     <input type="text" name="full_name" value="{{ user.full_name or '' }}" placeholder="Ivanov Ivan Ivanovich" maxlength="35"
-                           class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 dark:placeholder-gray-500"
                            oninput="validateProfileInput(this, 'fullNameCount', null, 35)"
                            {% if not can_edit %}disabled{% endif %}>
                     <div class="flex justify-end mt-1">
-                        <span id="fullNameCount" class="text-gray-400 text-[10px]">0/35</span>
+                        <span id="fullNameCount" class="text-gray-400 dark:text-gray-500 text-[10px]">0/35</span>
                     </div>
                 </div>
-                <!-- Phone (Max 15) -->
+                <!-- Phone -->
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Phone Number</label>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Phone Number</label>
                     <input type="text" name="phone" value="{{ user.phone or '' }}" placeholder="+1 234 567 890" maxlength="15"
-                           class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 dark:placeholder-gray-500"
                            oninput="validateProfileInput(this, 'phoneCount', null, 15)"
                            {% if not can_edit %}disabled{% endif %}>
                     <div class="flex justify-end mt-1">
-                        <span id="phoneCount" class="text-gray-400 text-[10px]">0/15</span>
+                        <span id="phoneCount" class="text-gray-400 dark:text-gray-500 text-[10px]">0/15</span>
                     </div>
                 </div>
             </div>
 
-            <!-- About Me (Max 250) -->
+            <!-- About Me -->
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">About Me</label>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">About Me</label>
                 <textarea name="about_me" rows="3" placeholder="Tell us about yourself..." maxlength="250"
-                          class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 dark:placeholder-gray-500"
                           oninput="validateProfileInput(this, 'aboutCount', null, 250)"
                           {% if not can_edit %}disabled{% endif %}>{{ user.about_me or '' }}</textarea>
                 <div class="flex justify-end mt-1">
-                    <span id="aboutCount" class="text-gray-400 text-[10px]">0/250</span>
+                    <span id="aboutCount" class="text-gray-400 dark:text-gray-500 text-[10px]">0/250</span>
                 </div>
             </div>
 
             <!-- Submit Button -->
             {% if can_edit %}
-            <div class="pt-4 border-t border-gray-100 flex justify-end">
+            <div class="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end">
                 <button type="submit" id="saveProfileBtn" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 font-bold shadow-md transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
                     Save Changes
                 </button>
             </div>
             {% else %}
-                <div class="pt-4 border-t border-gray-100">
-                    <p class="text-sm text-gray-500 italic text-center">You are viewing this profile in read-only mode.</p>
+                <div class="pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 italic text-center">You are viewing this profile in read-only mode.</p>
                 </div>
             {% endif %}
         </div>
@@ -196,13 +202,13 @@
 </form>
 
 <div id="cropperModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 50; align-items: center; justify-content: center;">
-    <div class="bg-white p-4 rounded-lg shadow-xl w-[90%] max-w-lg flex flex-col max-h-[90vh]">
-        <h3 class="text-lg font-bold text-gray-800 mb-2 text-center">Adjust Your Photo</h3>
-        <div class="relative w-full h-[400px] bg-gray-100 rounded overflow-hidden">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-xl w-[90%] max-w-lg flex flex-col max-h-[90vh]">
+        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2 text-center">Adjust Your Photo</h3>
+        <div class="relative w-full h-[400px] bg-gray-100 dark:bg-gray-900 rounded overflow-hidden">
             <img id="imageToCrop" src="" class="max-w-full" style="display: block; max-width: 100%;">
         </div>
-        <div class="flex justify-end gap-3 mt-4 pt-2 border-t border-gray-100">
-            <button type="button" id="cancelCropBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 font-medium">Cancel</button>
+        <div class="flex justify-end gap-3 mt-4 pt-2 border-t border-gray-100 dark:border-gray-700">
+            <button type="button" id="cancelCropBtn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 font-medium">Cancel</button>
             <button type="button" id="cropImageBtn" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-bold">Crop & Save</button>
         </div>
     </div>
@@ -216,6 +222,7 @@
     function validateProfileInput(input, countId, errorId, maxLength, minLength=0, isUsername=false) {
         const value = input.value;
         const countElem = document.getElementById(countId);
+        const saveBtn = document.getElementById('saveProfileBtn');
         let errorElem = errorId ? document.getElementById(errorId) : null;
 
         // Update Count

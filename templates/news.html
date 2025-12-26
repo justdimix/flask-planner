@@ -5,22 +5,22 @@
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">News & Events</h1>
-        
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">News & Events</h1>
+
         <!-- Admin Actions Toggle -->
         {% if current_user.is_admin %}
-        <button onclick="document.getElementById('adminForms').classList.toggle('hidden')" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm font-bold transition">
+        <button onclick="document.getElementById('adminForms').classList.toggle('hidden')" class="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-700 dark:hover:bg-indigo-600 text-sm font-bold transition">
             + Add New Content
         </button>
         {% endif %}
     </div>
 
-    <!-- FLASH MESSAGES (Auto-dismiss added) -->
+    <!-- FLASH MESSAGES -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div id="flash-messages" class="mb-6 transition-opacity duration-1000">
             {% for category, message in messages %}
-                <div class="text-white p-3 rounded-lg bg-green-500 mb-2 text-center font-bold shadow-sm">{{ message }}</div>
+                <div class="text-white p-3 rounded-lg bg-green-500 dark:bg-green-600 mb-2 text-center font-bold shadow-sm">{{ message }}</div>
             {% endfor %}
             </div>
         {% endif %}
@@ -28,75 +28,74 @@
 
     <!-- Admin Forms (Hidden by default) -->
     {% if current_user.is_admin %}
-    <div id="adminForms" class="hidden grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 bg-gray-50 p-6 rounded-xl border border-gray-200 shadow-inner">
+    <div id="adminForms" class="hidden grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 bg-gray-50 dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner transition-colors">
 
         <!-- Add News Post -->
-        <div class="border-b md:border-b-0 md:border-r border-gray-200 pb-6 md:pb-0 md:pr-6">
-            <h3 class="font-bold text-lg mb-4 text-indigo-700 flex items-center gap-2">
+        <div class="border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 pb-6 md:pb-0 md:pr-6">
+            <h3 class="font-bold text-lg mb-4 text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
                 <span>📰</span> Add News (Square Card)
             </h3>
             <form action="{{ url_for('add_news_post') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Image (Optional)</label>
-                    <input type="file" name="image" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition cursor-pointer">
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Image (Optional)</label>
+                    <input type="file" name="image" accept="image/*" class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800 transition cursor-pointer">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Description (Max 200 chars)</label>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Description (Max 200 chars)</label>
                     <textarea name="text" rows="3" placeholder="Enter news details..." required
-                              class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                              class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
                               maxlength="200"
                               oninput="checkCharCount(this, 'newsCountMsg', 'newsSubmitBtn', 200)"></textarea>
-                    <p id="newsCountMsg" class="text-xs text-gray-500 mt-1 text-right">Characters: 0/200</p>
+                    <p id="newsCountMsg" class="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">Characters: 0/200</p>
                 </div>
-                <button type="submit" id="newsSubmitBtn" class="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 font-bold transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">Post News</button>
+                <button type="submit" id="newsSubmitBtn" class="w-full bg-indigo-600 dark:bg-indigo-500 text-white py-2 rounded-md hover:bg-indigo-700 dark:hover:bg-indigo-600 font-bold transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">Post News</button>
             </form>
         </div>
 
         <!-- Add Event Summary -->
         <div class="pt-6 md:pt-0 md:pl-6">
-            <h3 class="font-bold text-lg mb-4 text-green-700 flex items-center gap-2">
+            <h3 class="font-bold text-lg mb-4 text-green-700 dark:text-green-400 flex items-center gap-2">
                 <span>📅</span> Add Event (Rectangular Card)
             </h3>
             <form action="{{ url_for('add_event_summary') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Image (Optional)</label>
-                    <input type="file" name="image" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 transition cursor-pointer">
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Image (Optional)</label>
+                    <input type="file" name="image" accept="image/*" class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 dark:file:bg-green-900 file:text-green-700 dark:file:text-green-300 hover:file:bg-green-100 dark:hover:file:bg-green-800 transition cursor-pointer">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Summary (Max 120 chars)</label>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Summary (Max 120 chars)</label>
                     <input type="text" name="text" placeholder="Short event summary..." required
-                           class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-green-500 focus:border-green-500"
+                           class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-green-500 focus:border-green-500"
                            maxlength="120"
                            oninput="checkCharCount(this, 'eventCountMsg', 'eventSubmitBtn', 120)">
-                    <p id="eventCountMsg" class="text-xs text-gray-500 mt-1 text-right">Characters: 0/120</p>
+                    <p id="eventCountMsg" class="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">Characters: 0/120</p>
                 </div>
-                <button type="submit" id="eventSubmitBtn" class="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 font-bold transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">Post Event</button>
+                <button type="submit" id="eventSubmitBtn" class="w-full bg-green-600 dark:bg-green-500 text-white py-2 rounded-md hover:bg-green-700 dark:hover:bg-green-600 font-bold transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">Post Event</button>
             </form>
         </div>
     </div>
     {% endif %}
 
-    <!-- CONTENT GRID (2:1 Ratio) -->
+    <!-- CONTENT GRID -->
     <div class="flex flex-col lg:flex-row gap-8">
 
-        <!-- LEFT COLUMN: NEWS (2/3 Width) -->
+        <!-- LEFT COLUMN: NEWS -->
         <div class="w-full lg:w-2/3">
             <div class="mb-4 flex items-center gap-2">
                 <span class="text-2xl">📰</span>
-                <h2 class="text-xl font-bold text-gray-800">Latest News</h2>
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white">Latest News</h2>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {% for post in news %}
-                <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition duration-300 overflow-hidden border border-gray-100 relative group aspect-square flex flex-col">
-                    <!-- Photo on Top (Click to Zoom) -->
-                    <div class="h-2/3 w-full bg-gray-100 overflow-hidden relative cursor-zoom-in" onclick="openLightbox('{{ url_for('static', filename='uploads/news_pics/' + post.image_filename) if post.image_filename else 'https://placehold.co/600x400/EEE/31343C?text=%F0%9F%A6%94' }}')">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 relative group aspect-square flex flex-col">
+                    <!-- Photo -->
+                    <div class="h-2/3 w-full bg-gray-100 dark:bg-gray-700 overflow-hidden relative cursor-zoom-in" onclick="openLightbox('{{ url_for('static', filename='uploads/news_pics/' + post.image_filename) if post.image_filename else 'https://placehold.co/600x400/EEE/31343C?text=%F0%9F%A6%94' }}')">
                         {% if post.image_filename %}
                             <img src="{{ url_for('static', filename='uploads/news_pics/' + post.image_filename) }}"
                                  class="w-full h-full object-cover transition transform group-hover:scale-105 duration-500"
                                  onerror="this.onerror=null; this.src='https://placehold.co/600x400/EEE/31343C?text=%F0%9F%A6%94';">
                         {% else %}
-                            <!-- Default Hedgehog Image -->
                             <img src="https://placehold.co/600x400/EEE/31343C?text=%F0%9F%A6%94"
                                  class="w-full h-full object-cover transition transform group-hover:scale-105 duration-500">
                         {% endif %}
@@ -105,11 +104,11 @@
                             <span class="text-xs text-white font-medium opacity-90">{{ post.created_at.strftime('%d %b %Y') }}</span>
                         </div>
                     </div>
-                    <!-- Text Below -->
-                    <div class="h-1/3 p-5 flex items-center justify-center text-center bg-white relative">
-                        <p class="text-gray-800 font-medium text-sm leading-relaxed line-clamp-4">{{ post.text }}</p>
+                    <!-- Text -->
+                    <div class="h-1/3 p-5 flex items-center justify-center text-center bg-white dark:bg-gray-800 relative">
+                        <p class="text-gray-800 dark:text-gray-200 font-medium text-sm leading-relaxed line-clamp-4">{{ post.text }}</p>
 
-                        <!-- Admin Edit Button (Hedgehog) -->
+                        <!-- Admin Edit -->
                         {% if current_user.is_admin %}
                         <button onclick="openEditModal('{{ post.id }}', '{{ post.text | replace("'", "\\'") }}')" class="absolute bottom-2 right-2 text-2xl hover:scale-125 transition transform cursor-pointer opacity-50 hover:opacity-100 z-10" title="Edit News">
                             🦔
@@ -117,10 +116,10 @@
                         {% endif %}
                     </div>
 
-                    <!-- Admin Delete Button (Top Right) -->
+                    <!-- Admin Delete -->
                     {% if current_user.is_admin %}
                     <form action="{{ url_for('delete_news_item', type='post', id=post.id) }}" method="POST" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition duration-200">
-                        <button type="submit" class="bg-white/90 text-red-500 p-2 rounded-full hover:bg-red-500 hover:text-white shadow-md transition" onclick="return confirm('Delete this post?')" title="Delete Post">
+                        <button type="submit" class="bg-white/90 dark:bg-gray-800/90 text-red-500 p-2 rounded-full hover:bg-red-500 hover:text-white shadow-md transition" onclick="return confirm('Delete this post?')" title="Delete Post">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
@@ -129,39 +128,39 @@
                     {% endif %}
                 </div>
                 {% else %}
-                <div class="col-span-1 md:col-span-2 bg-white rounded-xl border-2 border-dashed border-gray-200 p-10 text-center">
-                    <p class="text-gray-400 italic">No news posts yet.</p>
+                <div class="col-span-1 md:col-span-2 bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-10 text-center">
+                    <p class="text-gray-400 dark:text-gray-500 italic">No news posts yet.</p>
                 </div>
                 {% endfor %}
             </div>
         </div>
 
-        <!-- RIGHT COLUMN: EVENTS (1/3 Width) -->
+        <!-- RIGHT COLUMN: EVENTS -->
         <div class="w-full lg:w-1/3 flex flex-col gap-4">
-            <div class="mb-2 flex items-center gap-2 border-b pb-2 border-gray-200">
+            <div class="mb-2 flex items-center gap-2 border-b pb-2 border-gray-200 dark:border-gray-700">
                 <span class="text-2xl">📅</span>
-                <h2 class="text-xl font-bold text-gray-800">Quick Updates</h2>
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white">Quick Updates</h2>
             </div>
 
             <div class="space-y-4">
             {% for event in events %}
-            <div class="bg-white rounded-lg shadow-sm hover:shadow-md border border-gray-100 p-3 flex flex-row items-center gap-4 relative group transition duration-200">
-                <!-- Photo Left (Click to Zoom) -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md border border-gray-100 dark:border-gray-700 p-3 flex flex-row items-center gap-4 relative group transition duration-200">
+                <!-- Photo Left -->
                 <div class="flex-shrink-0 relative cursor-zoom-in" onclick="openLightbox('{{ url_for('static', filename='uploads/news_pics/' + event.image_filename) if event.image_filename else 'https://placehold.co/400?text=%F0%9F%A6%94' }}')">
                     {% if event.image_filename %}
                         <img src="{{ url_for('static', filename='uploads/news_pics/' + event.image_filename) }}"
-                             class="w-16 h-16 rounded-md object-cover border border-gray-200"
+                             class="w-16 h-16 rounded-md object-cover border border-gray-200 dark:border-gray-600"
                              onerror="this.onerror=null; this.src='https://placehold.co/400?text=%F0%9F%A6%94';">
                     {% else %}
                         <img src="https://placehold.co/400?text=%F0%9F%A6%94"
-                             class="w-16 h-16 rounded-md object-cover border border-gray-200">
+                             class="w-16 h-16 rounded-md object-cover border border-gray-200 dark:border-gray-600">
                     {% endif %}
                 </div>
 
                 <!-- Text Right -->
                 <div class="flex-grow min-w-0 pr-6">
-                    <p class="text-sm font-semibold text-gray-700 leading-tight line-clamp-2">{{ event.text }}</p>
-                    <span class="text-xs text-gray-400 mt-1 block">{{ event.created_at.strftime('%d %b %H:%M') }}</span>
+                    <p class="text-sm font-semibold text-gray-700 dark:text-gray-200 leading-tight line-clamp-2">{{ event.text }}</p>
+                    <span class="text-xs text-gray-400 dark:text-gray-500 mt-1 block">{{ event.created_at.strftime('%d %b %H:%M') }}</span>
                 </div>
 
                 <!-- Admin Controls -->
@@ -172,15 +171,14 @@
                         <button type="submit" class="text-xs text-red-400 hover:text-red-600 font-bold p-1" onclick="return confirm('Delete this event?')" title="Delete">×</button>
                     </form>
                 </div>
-                <!-- Admin Edit Button (Hedgehog) - Absolute Bottom Right -->
                 <button onclick="openEventEditModal('{{ event.id }}', '{{ event.text | replace("'", "\\'") }}')" class="absolute bottom-1 right-1 text-lg hover:scale-125 transition transform cursor-pointer opacity-0 group-hover:opacity-100 z-10" title="Edit Event">
                     🦔
                 </button>
                 {% endif %}
             </div>
             {% else %}
-                <div class="bg-white rounded-lg border-2 border-dashed border-gray-200 p-6 text-center">
-                    <p class="text-gray-400 italic">No events.</p>
+                <div class="bg-white dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 p-6 text-center">
+                    <p class="text-gray-400 dark:text-gray-500 italic">No events.</p>
                 </div>
             {% endfor %}
             </div>
@@ -189,7 +187,7 @@
     </div>
 </div>
 
-<!-- LIGHTBOX MODAL (Image Zoom) -->
+<!-- LIGHTBOX MODAL -->
 <div id="lightboxModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; cursor: zoom-out;" onclick="closeLightbox()">
     <img id="lightboxImage" src="" style="max-width: 80%; max-height: 80%; border-radius: 8px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);" onclick="event.stopPropagation()">
     <button onclick="closeLightbox()" class="absolute top-5 right-5 text-white text-5xl hover:text-gray-300">&times;</button>
@@ -197,24 +195,23 @@
 
 <!-- EDIT NEWS MODAL -->
 <div id="editNewsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 900; align-items: center; justify-content: center;">
-    <div class="relative mx-auto p-6 border w-[500px] shadow-2xl rounded-xl bg-white">
-        <h3 class="text-xl font-bold text-gray-900 mb-4">Edit News Post</h3>
+    <div class="relative mx-auto p-6 border w-[500px] shadow-2xl rounded-xl bg-white dark:bg-gray-800 dark:border-gray-700 transition-colors">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Edit News Post</h3>
         <form id="editNewsForm" method="POST" enctype="multipart/form-data" class="space-y-4">
             <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">New Image (Optional)</label>
-                <input type="file" name="image" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">New Image (Optional)</label>
+                <input type="file" name="image" accept="image/*" class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800 transition cursor-pointer">
             </div>
             <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Description (Max 200 chars)</label>
-                <textarea name="text" id="editNewsText" rows="4" required
-                          class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                          maxlength="200"
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Description (Max 200 chars)</label>
+                <textarea name="text" id="editNewsText" rows="4" required maxlength="200"
+                          class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
                           oninput="checkCharCount(this, 'editNewsCountMsg', 'editNewsSubmitBtn', 200)"></textarea>
-                <p id="editNewsCountMsg" class="text-xs text-gray-500 mt-1 text-right"></p>
+                <p id="editNewsCountMsg" class="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right"></p>
             </div>
             <div class="flex justify-end gap-2 pt-2">
-                <button type="button" onclick="document.getElementById('editNewsModal').style.display='none'" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Cancel</button>
-                <button type="submit" id="editNewsSubmitBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-bold disabled:opacity-50">Save Changes</button>
+                <button type="button" onclick="document.getElementById('editNewsModal').style.display='none'" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600">Cancel</button>
+                <button type="submit" id="editNewsSubmitBtn" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-md hover:bg-indigo-700 dark:hover:bg-indigo-600 font-bold disabled:opacity-50">Save Changes</button>
             </div>
         </form>
     </div>
@@ -222,24 +219,23 @@
 
 <!-- EDIT EVENT MODAL -->
 <div id="editEventModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 900; align-items: center; justify-content: center;">
-    <div class="relative mx-auto p-6 border w-[500px] shadow-2xl rounded-xl bg-white">
-        <h3 class="text-xl font-bold text-gray-900 mb-4">Edit Event</h3>
+    <div class="relative mx-auto p-6 border w-[500px] shadow-2xl rounded-xl bg-white dark:bg-gray-800 dark:border-gray-700 transition-colors">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Edit Event</h3>
         <form id="editEventForm" method="POST" enctype="multipart/form-data" class="space-y-4">
             <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">New Image (Optional)</label>
-                <input type="file" name="image" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer">
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">New Image (Optional)</label>
+                <input type="file" name="image" accept="image/*" class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 dark:file:bg-green-900 file:text-green-700 dark:file:text-green-300 hover:file:bg-green-100 dark:hover:file:bg-green-800 transition cursor-pointer">
             </div>
             <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Summary (Max 120 chars)</label>
-                <input type="text" name="text" id="editEventText" required
-                       class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-green-500 focus:border-green-500"
-                       maxlength="120"
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Summary (Max 120 chars)</label>
+                <input type="text" name="text" id="editEventText" required maxlength="120"
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-green-500 focus:border-green-500"
                        oninput="checkCharCount(this, 'editEventCountMsg', 'editEventSubmitBtn', 120)">
-                <p id="editEventCountMsg" class="text-xs text-gray-500 mt-1 text-right"></p>
+                <p id="editEventCountMsg" class="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right"></p>
             </div>
             <div class="flex justify-end gap-2 pt-2">
-                <button type="button" onclick="document.getElementById('editEventModal').style.display='none'" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Cancel</button>
-                <button type="submit" id="editEventSubmitBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-bold disabled:opacity-50">Save Changes</button>
+                <button type="button" onclick="document.getElementById('editEventModal').style.display='none'" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600">Cancel</button>
+                <button type="submit" id="editEventSubmitBtn" class="px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 font-bold disabled:opacity-50">Save Changes</button>
             </div>
         </form>
     </div>
@@ -257,14 +253,14 @@
         feedback.innerText = `Characters: ${count}/${limit}`;
 
         if (count > limit) {
-            feedback.classList.remove('text-gray-500');
+            feedback.classList.remove('text-gray-500', 'dark:text-gray-400');
             feedback.classList.add('text-red-500', 'font-bold');
             feedback.innerText += " (Limit exceeded!)";
             button.disabled = true;
             button.classList.add('cursor-not-allowed', 'opacity-50');
         } else {
             feedback.classList.remove('text-red-500', 'font-bold');
-            feedback.classList.add('text-gray-500');
+            feedback.classList.add('text-gray-500', 'dark:text-gray-400');
             button.disabled = false;
             button.classList.remove('cursor-not-allowed', 'opacity-50');
         }

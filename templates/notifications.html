@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Notifications{% endblock %}
+{% block title %}Messages{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto px-4">
+<div class="max-w-5xl mx-auto px-4 mt-8">
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Messages</h1>
-        <button onclick="openComposeModal()" class="bg-indigo-600 text-white px-6 py-2 rounded-full hover:bg-indigo-700 font-bold shadow-md transition transform hover:scale-105 flex items-center gap-2">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Messages</h1>
+        <button onclick="openComposeModal()" class="bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2 rounded-full hover:bg-indigo-700 dark:hover:bg-indigo-600 font-bold shadow-md transition transform hover:scale-105 flex items-center gap-2">
             <span>✏️</span> Compose
         </button>
     </div>
@@ -16,7 +16,7 @@
         {% if messages %}
             <div id="flash-messages" class="mb-6 space-y-2 transition-opacity duration-1000">
             {% for category, message in messages %}
-                <div class="{{ 'text-green-600 bg-green-100 p-3 rounded-lg border-l-4 border-green-600' if category == 'success' else 'text-red-600 bg-red-100 p-3 rounded-lg border-l-4 border-red-600' }}">
+                <div class="{{ 'text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-200 border-green-600' if category == 'success' else 'text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-200 border-red-600' }} p-3 rounded-lg border-l-4">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -25,37 +25,36 @@
     {% endwith %}
 
     <!-- TABS -->
-    <div class="flex border-b border-gray-200 mb-6">
-        <button id="tabInboxBtn" onclick="switchTab('inbox')" class="px-6 py-3 border-b-2 font-bold text-indigo-600 border-indigo-600 focus:outline-none transition">
+    <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6">
+        <button id="tabInboxBtn" onclick="switchTab('inbox')" class="px-6 py-3 border-b-2 font-bold text-indigo-600 dark:text-indigo-400 border-indigo-600 dark:border-indigo-400 focus:outline-none transition">
             Inbox
             {% if unread_count > 0 %}
                 <span class="ml-1 bg-red-500 text-white rounded-full px-2 py-0.5 text-xs">unread {{ unread_count }}</span>
             {% endif %}
         </button>
-        <button id="tabSentBtn" onclick="switchTab('sent')" class="px-6 py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-700 focus:outline-none transition">
+        <button id="tabSentBtn" onclick="switchTab('sent')" class="px-6 py-3 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none transition">
             Sent
         </button>
     </div>
 
-    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden min-h-[300px]">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden min-h-[300px] transition-colors duration-300">
 
         <!-- INBOX VIEW -->
         <div id="inboxView">
             {% if received_messages %}
-                <div class="divide-y divide-gray-100">
+                <div class="divide-y divide-gray-100 dark:divide-gray-700">
                     {% for msg in received_messages %}
                     <div
                         onclick="openReadModal('{{ msg.id }}', 'From: {{ msg.sender.username }}', '{{ msg.subject }}', `{{ msg.body }}`, '{{ msg.timestamp.strftime('%d %b %H:%M') }}', '{{ msg.sender.id }}', this, false)"
-                        class="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition duration-150 {{ 'bg-white font-bold' if not msg.is_read else 'bg-gray-50 text-gray-600' }}"
+                        class="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-150 {{ 'bg-white dark:bg-gray-800 font-bold' if not msg.is_read else 'bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400' }}"
                     >
                         <div class="flex items-center gap-4 flex-grow">
                             <!-- Sender Avatar -->
                             <div class="flex-shrink-0">
                                  {% if msg.sender.profile_pic and msg.sender.profile_pic != 'default.jpg' %}
-                                    <!-- FIXED PATH: uploads/profile_pics/ -->
-                                    <img src="{{ url_for('static', filename='uploads/profile_pics/' + msg.sender.profile_pic) }}" class="w-10 h-10 rounded-full object-cover border border-gray-200">
+                                    <img src="{{ url_for('static', filename='uploads/profile_pics/' + msg.sender.profile_pic) }}" class="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-600">
                                 {% else %}
-                                    <div class="w-10 h-10 rounded-full bg-[#FFA07A] flex items-center justify-center text-white font-bold text-sm border border-gray-200">
+                                    <div class="w-10 h-10 rounded-full bg-[#FFA07A] flex items-center justify-center text-white font-bold text-sm border border-gray-200 dark:border-gray-600">
                                         {{ msg.sender.username[0].upper() }}
                                     </div>
                                 {% endif %}
@@ -63,22 +62,22 @@
 
                             <div class="flex-grow min-w-0">
                                 <p class="text-sm truncate">
-                                    <span class="{{ 'text-indigo-700' if not msg.is_read else 'text-gray-800' }}">{{ msg.sender.username }}</span>
-                                    <span class="text-gray-400 mx-1">•</span>
-                                    <span class="{{ 'text-black' if not msg.is_read else 'text-gray-500' }}">{{ msg.subject or 'No Subject' }}</span>
+                                    <span class="{{ 'text-indigo-700 dark:text-indigo-300' if not msg.is_read else 'text-gray-800 dark:text-gray-300' }}">{{ msg.sender.username }}</span>
+                                    <span class="text-gray-400 dark:text-gray-500 mx-1">•</span>
+                                    <span class="{{ 'text-black dark:text-white' if not msg.is_read else 'text-gray-500 dark:text-gray-400' }}">{{ msg.subject or 'No Subject' }}</span>
                                 </p>
-                                <p class="text-xs text-gray-500 truncate">{{ msg.body }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ msg.body }}</p>
                             </div>
                         </div>
 
-                        <div class="text-xs text-gray-400 whitespace-nowrap ml-4">
+                        <div class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap ml-4">
                             {{ msg.timestamp.strftime('%d %b') }}
                         </div>
                     </div>
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="p-12 text-center text-gray-400 flex flex-col items-center justify-center h-full">
+                <div class="p-12 text-center text-gray-400 dark:text-gray-500 flex flex-col items-center justify-center h-full">
                     <span class="text-4xl block mb-2">📭</span>
                     <p>No messages in your inbox.</p>
                 </div>
@@ -88,20 +87,19 @@
         <!-- SENT VIEW (Hidden by default) -->
         <div id="sentView" class="hidden">
             {% if sent_messages %}
-                <div class="divide-y divide-gray-100">
+                <div class="divide-y divide-gray-100 dark:divide-gray-700">
                     {% for msg in sent_messages %}
                     <div
                         onclick="openReadModal('{{ msg.id }}', 'To: {{ msg.recipient.username }}', '{{ msg.subject }}', `{{ msg.body }}`, '{{ msg.timestamp.strftime('%d %b %H:%M') }}', null, this, true)"
-                        class="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition duration-150 bg-gray-50 text-gray-600"
+                        class="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-150 bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400"
                     >
                         <div class="flex items-center gap-4 flex-grow">
                             <!-- Recipient Avatar -->
                             <div class="flex-shrink-0">
                                  {% if msg.recipient.profile_pic and msg.recipient.profile_pic != 'default.jpg' %}
-                                    <!-- FIXED PATH: uploads/profile_pics/ -->
-                                    <img src="{{ url_for('static', filename='uploads/profile_pics/' + msg.recipient.profile_pic) }}" class="w-10 h-10 rounded-full object-cover border border-gray-200 opacity-75">
+                                    <img src="{{ url_for('static', filename='uploads/profile_pics/' + msg.recipient.profile_pic) }}" class="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-600 opacity-75">
                                 {% else %}
-                                    <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold text-sm border border-gray-200">
+                                    <div class="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-white font-bold text-sm border border-gray-200 dark:border-gray-500">
                                         {{ msg.recipient.username[0].upper() }}
                                     </div>
                                 {% endif %}
@@ -109,21 +107,21 @@
 
                             <div class="flex-grow min-w-0">
                                 <p class="text-sm truncate">
-                                    <span class="text-gray-800">To: {{ msg.recipient.username }}</span>
+                                    <span class="text-gray-800 dark:text-gray-300">To: {{ msg.recipient.username }}</span>
                                     <span class="text-gray-400 mx-1">•</span>
-                                    <span class="text-gray-500">{{ msg.subject or 'No Subject' }}</span>
+                                    <span class="text-gray-500 dark:text-gray-400">{{ msg.subject or 'No Subject' }}</span>
                                 </p>
-                                <p class="text-xs text-gray-500 truncate">{{ msg.body }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 truncate">{{ msg.body }}</p>
                             </div>
                         </div>
-                        <div class="text-xs text-gray-400 whitespace-nowrap ml-4">
+                        <div class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap ml-4">
                             {{ msg.timestamp.strftime('%d %b') }}
                         </div>
                     </div>
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="p-12 text-center text-gray-400 flex flex-col items-center justify-center h-full">
+                <div class="p-12 text-center text-gray-400 dark:text-gray-500 flex flex-col items-center justify-center h-full">
                     <span class="text-4xl block mb-2">📤</span>
                     <p>No sent messages.</p>
                 </div>
@@ -135,57 +133,56 @@
 
 <!-- COMPOSE MODAL -->
 <div id="composeModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-    <div class="relative mx-auto p-6 border w-[600px] shadow-2xl rounded-xl bg-white flex flex-col max-h-[90vh]">
-        <div class="flex justify-between items-center mb-4 border-b pb-2">
-            <h3 class="text-xl font-bold text-gray-900">New Message</h3>
-            <button onclick="document.getElementById('composeModal').style.display='none'" class="text-gray-400 hover:text-gray-700 text-2xl font-bold">&times;</button>
+    <div class="relative mx-auto p-6 border w-[600px] shadow-2xl rounded-xl bg-white dark:bg-gray-800 dark:border-gray-700 flex flex-col max-h-[90vh]">
+        <div class="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-2">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">New Message</h3>
+            <button onclick="document.getElementById('composeModal').style.display='none'" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-2xl font-bold">&times;</button>
         </div>
 
         <form action="{{ url_for('send_message') }}" method="POST" class="flex flex-col gap-4 flex-grow overflow-y-auto p-1">
 
             <!-- Recipient Selection -->
-            <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">To:</label>
+            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded border border-gray-200 dark:border-gray-600">
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-300 uppercase mb-2">To:</label>
 
                 {% if current_user.is_admin %}
-                    <div class="flex gap-4 text-sm mb-3 flex-wrap">
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="recipient_mode" value="custom" checked onclick="toggleRecipientsList(true)"> Custom</label>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="recipient_mode" value="everyone" onclick="toggleRecipientsList(false)"> Everyone</label>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="recipient_mode" value="all_users" onclick="toggleRecipientsList(false)"> All Users</label>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="recipient_mode" value="all_admins" onclick="toggleRecipientsList(false)"> All Admins</label>
+                    <div class="flex gap-4 text-sm mb-3 flex-wrap text-gray-700 dark:text-gray-200">
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="recipient_mode" value="custom" checked onclick="toggleRecipientsList(true)" class="text-indigo-600"> Custom</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="recipient_mode" value="everyone" onclick="toggleRecipientsList(false)" class="text-indigo-600"> Everyone</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="recipient_mode" value="all_users" onclick="toggleRecipientsList(false)" class="text-indigo-600"> All Users</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="recipient_mode" value="all_admins" onclick="toggleRecipientsList(false)" class="text-indigo-600"> All Admins</label>
                     </div>
                 {% else %}
-                    <p class="text-xs text-gray-400 mb-2 italic">You can message administrators.</p>
+                    <p class="text-xs text-gray-400 dark:text-gray-400 mb-2 italic">You can message administrators.</p>
                 {% endif %}
 
                 <!-- SEARCH BAR FOR RECIPIENTS -->
-                <input type="text" placeholder="Search recipients..." class="w-full border border-gray-300 rounded mb-2 px-2 py-1 text-sm" onkeyup="filterRecipients(this)">
+                <input type="text" placeholder="Search recipients..." class="w-full border border-gray-300 dark:border-gray-600 rounded mb-2 px-2 py-1 text-sm bg-white dark:bg-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" onkeyup="filterRecipients(this)">
 
-                <div id="recipientList" class="h-32 overflow-y-auto border border-gray-300 rounded bg-white p-2">
+                <div id="recipientList" class="h-32 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-600 p-2">
                     {% for r in recipients %}
-                        <!-- Don't show self -->
                         {% if r.id != current_user.id %}
-                        <label class="flex items-center space-x-2 mb-1 hover:bg-gray-50 p-1 rounded cursor-pointer recipient-item">
-                            <input type="checkbox" name="recipients" value="{{ r.id }}" class="recipient-checkbox">
-                            <span class="text-sm username-text">{{ r.username }} <span class="text-xs text-gray-400">({{ 'Admin' if r.is_admin else 'User' }})</span></span>
+                        <label class="flex items-center space-x-2 mb-1 hover:bg-gray-50 dark:hover:bg-gray-500 p-1 rounded cursor-pointer recipient-item text-gray-700 dark:text-gray-200">
+                            <input type="checkbox" name="recipients" value="{{ r.id }}" class="recipient-checkbox rounded text-indigo-600">
+                            <span class="text-sm username-text">{{ r.username }} <span class="text-xs text-gray-400 dark:text-gray-400">({{ 'Admin' if r.is_admin else 'User' }})</span></span>
                         </label>
                         {% endif %}
                     {% else %}
-                         <p class="text-xs text-gray-400">No recipients available.</p>
+                         <p class="text-xs text-gray-400 dark:text-gray-400">No recipients available.</p>
                     {% endfor %}
                 </div>
             </div>
 
             <div>
-                <input type="text" name="subject" placeholder="Subject" required class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-indigo-500 font-bold">
+                <input type="text" name="subject" placeholder="Subject" required class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 font-bold bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400">
             </div>
 
             <div class="flex-grow">
-                <textarea name="body" rows="6" placeholder="Write your message..." required class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-indigo-500 h-full"></textarea>
+                <textarea name="body" rows="6" placeholder="Write your message..." required class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm focus:ring-indigo-500 h-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"></textarea>
             </div>
 
-            <div class="flex justify-end pt-2 border-t border-gray-100">
-                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 font-bold shadow-md">Send</button>
+            <div class="flex justify-end pt-2 border-t border-gray-100 dark:border-gray-700">
+                <button type="submit" class="bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2 rounded-md hover:bg-indigo-700 dark:hover:bg-indigo-600 font-bold shadow-md">Send</button>
             </div>
         </form>
     </div>
@@ -193,30 +190,30 @@
 
 <!-- READ MESSAGE MODAL -->
 <div id="readModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-    <div class="relative mx-auto p-8 border w-[600px] shadow-2xl rounded-xl bg-white flex flex-col max-h-[90vh]">
-        <button onclick="document.getElementById('readModal').style.display='none'" class="absolute right-4 top-4 text-gray-400 hover:text-gray-700 text-2xl font-bold">&times;</button>
+    <div class="relative mx-auto p-8 border w-[600px] shadow-2xl rounded-xl bg-white dark:bg-gray-800 dark:border-gray-700 flex flex-col max-h-[90vh]">
+        <button onclick="document.getElementById('readModal').style.display='none'" class="absolute right-4 top-4 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-2xl font-bold">&times;</button>
 
         <div class="mb-6">
-            <h2 class="text-2xl font-bold text-gray-900 mb-1" id="readSubject"></h2>
-            <div class="flex items-center gap-2 text-sm text-gray-500">
-                <span>From: <span class="font-bold text-indigo-600" id="readSender"></span></span>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-1" id="readSubject"></h2>
+            <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <span>From: <span class="font-bold text-indigo-600 dark:text-indigo-400" id="readSender"></span></span>
                 <span>•</span>
                 <span id="readTime"></span>
             </div>
         </div>
 
-        <div class="flex-grow overflow-y-auto bg-gray-50 p-4 rounded-lg border border-gray-100 text-gray-800 whitespace-pre-wrap leading-relaxed" id="readBody"></div>
+        <div class="flex-grow overflow-y-auto bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-100 dark:border-gray-600 text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed" id="readBody"></div>
 
-        <div class="mt-6 pt-4 border-t border-gray-100 flex justify-between items-center">
+        <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
             <!-- Delete Button (Left) -->
             <form id="deleteMsgForm" method="POST" onsubmit="return confirm('Delete this message permanently?');">
-                <button type="submit" class="text-red-500 hover:text-red-700 font-bold text-sm flex items-center gap-1 transition">
+                <button type="submit" class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-bold text-sm flex items-center gap-1 transition">
                     <span>🗑️</span> Delete
                 </button>
             </form>
 
             <!-- Reply Button (Right) -->
-            <button id="replyBtn" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 font-bold shadow-md flex items-center gap-2 transition">
+            <button id="replyBtn" class="bg-blue-600 dark:bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 font-bold shadow-md flex items-center gap-2 transition">
                 <span>↩️</span> Reply
             </button>
         </div>
@@ -231,7 +228,7 @@
             flashMessages.style.opacity = '0';
             setTimeout(() => flashMessages.remove(), 1000);
         }
-    }, 3000);
+    }, 3000); // 3 seconds delay
 
     function openComposeModal() {
         document.getElementById('composeModal').style.display = 'flex';
@@ -264,24 +261,25 @@
         const tabInbox = document.getElementById('tabInboxBtn');
         const tabSent = document.getElementById('tabSentBtn');
 
+        // Dark Mode aware classes
         if (tab === 'inbox') {
             inboxView.classList.remove('hidden');
             sentView.classList.add('hidden');
 
-            tabInbox.classList.add('text-indigo-600', 'border-indigo-600');
-            tabInbox.classList.remove('text-gray-500', 'border-transparent');
+            tabInbox.classList.add('text-indigo-600', 'dark:text-indigo-400', 'border-indigo-600', 'dark:border-indigo-400');
+            tabInbox.classList.remove('text-gray-500', 'dark:text-gray-400', 'border-transparent');
 
-            tabSent.classList.add('text-gray-500', 'border-transparent');
-            tabSent.classList.remove('text-indigo-600', 'border-indigo-600');
+            tabSent.classList.add('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+            tabSent.classList.remove('text-indigo-600', 'dark:text-indigo-400', 'border-indigo-600', 'dark:border-indigo-400');
         } else {
             sentView.classList.remove('hidden');
             inboxView.classList.add('hidden');
 
-            tabSent.classList.add('text-indigo-600', 'border-indigo-600');
-            tabSent.classList.remove('text-gray-500', 'border-transparent');
+            tabSent.classList.add('text-indigo-600', 'dark:text-indigo-400', 'border-indigo-600', 'dark:border-indigo-400');
+            tabSent.classList.remove('text-gray-500', 'dark:text-gray-400', 'border-transparent');
 
-            tabInbox.classList.add('text-gray-500', 'border-transparent');
-            tabInbox.classList.remove('text-indigo-600', 'border-indigo-600');
+            tabInbox.classList.add('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+            tabInbox.classList.remove('text-indigo-600', 'dark:text-indigo-400', 'border-indigo-600', 'dark:border-indigo-400');
         }
     }
 
@@ -297,8 +295,9 @@
 
         // Mark UI as read immediately (only for inbox)
         if (!isSent && rowElement.classList.contains('font-bold')) {
-            rowElement.classList.remove('bg-white', 'font-bold');
-            rowElement.classList.add('bg-gray-50', 'text-gray-600');
+            rowElement.classList.remove('bg-white', 'dark:bg-gray-800', 'font-bold');
+            // FIX: Use dark:bg-gray-900/50 instead of dark:bg-gray-750 (which is invalid)
+            rowElement.classList.add('bg-gray-50', 'dark:bg-gray-900/50', 'text-gray-600', 'dark:text-gray-400');
 
             // AJAX call to mark as read in DB
             fetch(`/mark_read/${id}`, { method: 'POST' });
@@ -315,11 +314,9 @@
                 openComposeModal();
 
                 // Pre-fill compose form
-                // Find checkbox for sender and check it
                 const checkboxes = document.querySelectorAll(`input[name="recipients"][value="${senderId}"]`);
                 if(checkboxes.length > 0) {
                     checkboxes[0].checked = true;
-                    // Scroll to checkbox
                     checkboxes[0].scrollIntoView({ block: 'center' });
                 }
 
